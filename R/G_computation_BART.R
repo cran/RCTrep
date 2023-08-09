@@ -1,6 +1,7 @@
 #' @import geex
 #' @import ggplot2
 #' @import fastDummies
+#' @import BART
 G_computation_BART <- R6::R6Class(
   "G_computation_BART",
   inherit = TEstimator,
@@ -21,7 +22,7 @@ G_computation_BART <- R6::R6Class(
       private$gc.method <- gc.method
       private$gc.formula <- gc.formula
       private$var_approach <- var_approach
-      private$confounders_treatment_factor <- private$confounders_treatment_name[sapply(self$data[,private$confounders_treatment_name],
+      private$confounders_treatment_factor <- private$outcome_predictors[sapply(self$data[,private$outcome_predictors],
                                                                                 is.factor)]
       self$model <- private$fit(...)
       po_mean_var <- private$est_potentialOutcomes_mean_var()
@@ -32,7 +33,7 @@ G_computation_BART <- R6::R6Class(
       self$data$ite.var <- self$data$y1.hat.var + self$data$y0.hat.var
       self$resi <- private$est_residual()
       private$set_ATE()
-      private$set_CATE(private$confounders_treatment_name,TRUE)
+      private$set_CATE(private$outcome_predictors,TRUE)
       private$isTrial <- isTrial
       self$id <- paste(self$id, private$gc.method, sep = "/")
 
@@ -41,7 +42,7 @@ G_computation_BART <- R6::R6Class(
     diagnosis_t_ignorability = function(stratification, stratification_joint=TRUE){
       #browser()
       if(missing(stratification)){
-        stratification <- private$confounders_treatment_name
+        stratification <- private$outcome_predictors
       }
 
       residuals.overall <- mean(self$resi)
@@ -135,7 +136,7 @@ G_computation_BART <- R6::R6Class(
 
     fit = function(...) {
       #browser()
-      x.train <- self$data[, c(private$confounders_treatment_name, private$treatment_name)]
+      x.train <- self$data[, c(private$outcome_predictors, private$treatment_name)]
       if(length(private$confounders_treatment_factor)>0){
         x.train <- fastDummies::dummy_cols(x.train, select_columns= private$confounders_treatment_factor,
                                            remove_selected_columns = TRUE)
@@ -210,7 +211,7 @@ G_computation_BART <- R6::R6Class(
 
     est_potentialOutcomes_mean_var = function() {
       #browser()
-      data0 <- data1 <- self$data[, c(private$confounders_treatment_name, private$treatment_name)]
+      data0 <- data1 <- self$data[, c(private$outcome_predictors, private$treatment_name)]
       data0[, private$treatment_name] <- 0
       data1[, private$treatment_name] <- 1
       if(length(private$confounders_treatment_factor)>0){

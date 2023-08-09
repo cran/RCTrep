@@ -1,4 +1,5 @@
 #' @importFrom geex m_estimate
+#' @import caret
 G_computation <- R6::R6Class(
   "G_computation",
   inherit = TEstimator,
@@ -33,7 +34,7 @@ G_computation <- R6::R6Class(
       self$data$y0.hat <- po.est$y0.hat
       self$resi <- private$est_residual()
       private$set_ATE()
-      private$set_CATE(private$confounders_treatment_name,TRUE)
+      private$set_CATE(private$outcome_predictors,TRUE)
       private$isTrial <- isTrial
       self$id <- paste(self$id, private$gc.method, sep = "/")
     },
@@ -41,7 +42,7 @@ G_computation <- R6::R6Class(
     diagnosis_t_ignorability = function(stratification, stratification_joint=TRUE){
       #browser()
       if(missing(stratification)){
-        stratification <- private$confounders_treatment_name
+        stratification <- private$outcome_predictors
       }
 
       residuals.overall <- mean(self$resi)
@@ -135,7 +136,7 @@ G_computation <- R6::R6Class(
 
     fit = function(...) {
       if (private$gc.method == "BART"){
-        x.train <- as.matrix(self$data[, c(private$confounders_treatment_name, private$treatment_name)])
+        x.train <- as.matrix(self$data[, c(private$outcome_predictors, private$treatment_name)])
         y.train <- as.matrix(self$data[, private$outcome_name])
         model <- BART::wbart(
           x.train = x.train,
@@ -145,7 +146,7 @@ G_computation <- R6::R6Class(
       } else {
         if (is.null(private$gc.formula)) {
           model <- caret::train(
-            x = self$data[, c(private$confounders_treatment_name, private$treatment_name)],
+            x = self$data[, c(private$outcome_predictors, private$treatment_name)],
             y = self$data[, private$outcome_name],
             method = private$gc.method,
             ...
@@ -226,7 +227,7 @@ G_computation <- R6::R6Class(
 
     est_potentialOutcomes = function() {
       #browser()
-      data0 <- data1 <- self$data[, c(private$confounders_treatment_name, private$treatment_name)]
+      data0 <- data1 <- self$data[, c(private$outcome_predictors, private$treatment_name)]
       t.level <- unique(self$data[, private$treatment_name])
       level.order <- order(t.level)
       data0[, private$treatment_name] <- t.level[match(1, level.order)]

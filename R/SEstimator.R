@@ -12,44 +12,44 @@ SEstimator <- R6::R6Class(
                                       se=NA),
                      CATE = data.frame()),
     model = NA,
-    confounders_sampling_name = NA,
+    selection_predictors = NA,
     weighting_method = character(),
 
     initialize = function(target.obj, source.obj, weighting_method=NULL,
-                          confounders_sampling_name){
+                          selection_predictors){
       private$target.obj <- target.obj
       private$source.obj <- source.obj
       self$weighting_method <- weighting_method
-      self$confounders_sampling_name <- confounders_sampling_name
+      self$selection_predictors <- selection_predictors
       private$ispublic <- !c("TEstimator_pp") %in% class(source.obj)
       self$name <- source.obj$name
       self$statistics <- source.obj$statistics
       self$id <- paste(private$source.obj$id,
                        self$weighting_estimator,
-                       length(self$confounders_sampling_name),sep = '/')
+                       length(self$selection_predictors),sep = '/')
       private$isTrial <- source.obj$.__enclos_env__$private$isTrial
     },
 
-    EstimateRep = function(stratification=self$confounders_sampling_name, stratification_joint=TRUE) {
+    EstimateRep = function(stratification=self$selection_predictors, stratification_joint=TRUE) {
       #browser()
       private$set_weighted_ATE_SE()
 
       if(stratification_joint==FALSE){
         message("since stratitification is FALSE, then for each strata,
-                we will balance confounders_sampling_name which are not used to stratify!")
+                we will balance selection_predictors which are not used to stratify!")
         private$set_weighted_CATE_SE(stratification = stratification,
                                      stratification_joint = FALSE)
       } else{
-        if (all(self$confounders_sampling_name %in% stratification)==TRUE){
-          message("since confounders_sampling_name is a subset of stratification,
+        if (all(self$selection_predictors %in% stratification)==TRUE){
+          message("since selection_predictors is a subset of stratification,
                   in each strata, the weight for each individual is 1")
           self$estimates$CATE <- private$source.obj$get_CATE(stratification = stratification,
                                                              stratification_joint = TRUE)
           #self$estimates$CATE <- cbind(self$estimates$CATE,'pt','py')
         } else {
-          message("since confounders_sampling_name and stratification is overlapped,
+          message("since selection_predictors and stratification is overlapped,
                   in each strata, the weight for each individual according to variables
-                  in setdiff(confounders_sampling_name,stratificaiton), i.e., the variables in set confounders_sampling_name
+                  in setdiff(selection_predictors,stratificaiton), i.e., the variables in set selection_predictors
                   while not in the set stratificaiton.")
           private$set_weighted_CATE_SE(stratification = stratification,
                                        stratification_joint = TRUE)
@@ -60,7 +60,7 @@ SEstimator <- R6::R6Class(
     diagnosis_s_overlap = function(stratification=NULL, stratification_joint=TRUE){
       #browser()
       if(missing(stratification)){
-        vars_name <- self$confounders_sampling_name
+        vars_name <- self$selection_predictors
       } else{
         vars_name <- stratification
       }
@@ -106,7 +106,7 @@ SEstimator <- R6::R6Class(
     diagnosis_s_ignorability = function(stratification=NULL, stratification_joint=TRUE){
       #browser()
       if(missing(stratification)){
-        vars_name <- self$confounders_sampling_name
+        vars_name <- self$selection_predictors
       } else{
         vars_name <- stratification
       }
@@ -119,19 +119,19 @@ SEstimator <- R6::R6Class(
       weight <- private$get_weight(
         source = private$source.obj$data,
         target = private$target.obj$data,
-        vars_weighting = self$confounders_sampling_name
+        vars_weighting = self$selection_predictors
       )
 
       p.source <- private$source.obj$data %>%
         bind_cols(weight = weight) %>%
-        group_by(across(all_of(self$confounders_sampling_name))) %>%
+        group_by(across(all_of(self$selection_predictors))) %>%
         summarise(size.agg=sum(weight)) %>%
         ungroup() %>%
         mutate(prop=size.agg/sum(size.agg),
                study=private$source.obj$name)
 
       p.target <- private$target.obj$data %>%
-        group_by(across(all_of(self$confounders_sampling_name))) %>%
+        group_by(across(all_of(self$selection_predictors))) %>%
         summarise(size.agg=n()) %>%
         ungroup() %>%
         mutate(prop=size.agg/sum(size.agg),
@@ -166,7 +166,7 @@ SEstimator <- R6::R6Class(
       weight <- private$get_weight(
         source = private$source.obj$data,
         target = private$target.obj$data,
-        vars_weighting = self$confounders_sampling_name
+        vars_weighting = self$selection_predictors
       )
 
       ATE_se_weighted <- private$source.obj$.__enclos_env__$private$est_weighted_ATE_SE(private$source.obj$data$id,weight)
@@ -187,7 +187,7 @@ SEstimator <- R6::R6Class(
     est_WeightedCATEestimation4JointStratification = function(stratification) {
       #browser()
       cate <- se <- size <- y1.hat <- y0.hat <- NULL
-      vars_weighting <- self$confounders_sampling_name
+      vars_weighting <- self$selection_predictors
       vars_weighting_subgroup <- vars_weighting[!vars_weighting %in% stratification]
 
       group_data <- private$source.obj$data %>%
@@ -227,7 +227,7 @@ SEstimator <- R6::R6Class(
 
     est_WeightedCATEestimation4SeperateStratification = function(stratification) {
       #browser()
-      vars_weighting <- self$confounders_sampling_name
+      vars_weighting <- self$selection_predictors
       group_var <- group_level <- cate <- se <- size <- y1.hat <- y0.hat <- NULL
       i <- 1
       for (var_name in stratification) {

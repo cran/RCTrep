@@ -8,7 +8,7 @@ SEstimator_wrapper(
   Estimator,
   target.obj,
   source.obj,
-  confounders_sampling_name,
+  selection_predictors,
   method = "glm",
   sampling_formula = NULL,
   ...
@@ -19,7 +19,7 @@ SEstimator_wrapper(
 
 \item{target.obj, source.obj}{an instantiated object of class \code{TEstimator}.}
 
-\item{confounders_sampling_name}{a character vector specifying the names of variables in \code{data} of \code{source.obj} and \code{target.obj}. Weights are estimated based on the variables.}
+\item{selection_predictors}{a character vector specifying the names of variables in \code{data} of \code{source.obj} and \code{target.obj}. Weights are estimated based on the variables.}
 
 \item{method}{an optional character specifying a model for estimating sampling probability when \code{Estimator='ISW'} or \code{Estimator='Subclass'}.}
 
@@ -35,10 +35,10 @@ Estimating the weighted conditional average treatment effects in \code{source.ob
 }
 \examples{
 \donttest{
-source.data <- RCTrep::source.data[sample(dim(RCTrep::source.data)[1],500),]
-target.data <- RCTrep::target.data[sample(dim(RCTrep::target.data)[1],500),]
+source.data <- RCTrep::source.data
+target.data <- RCTrep::target.data
 
-vars_name <- list(confounders_treatment_name = c("x1","x2","x3","x4","x5","x6"),
+vars_name <- list(outcome_predictors = c("x1","x2","x3","x4","x5","x6"),
                   treatment_name = c('z'),
                   outcome_name = c('y'))
 
@@ -62,7 +62,7 @@ source.obj <- TEstimator_wrapper(
 source.rep.obj <- SEstimator_wrapper(Estimator="Exact",
                                      target.obj=target.obj,
                                      source.obj=source.obj,
-                                     confounders_sampling_name=c("x2","x6"))
+                                     selection_predictors=c("x2","x6"))
 source.rep.obj$EstimateRep(stratification = c("x1","x3","x4","x5"),
                            stratification_joint = TRUE)
 

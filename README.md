@@ -146,10 +146,9 @@ careful investigation and identification.
 
 ### Step 1: Identification
 
-This step is to identifiy the variable set
-**confounders_treatment_name** that confound causal relation between
-treatment and outcome, and the variable set
-**confounders_sampling_name** that can induce supurious difference in
+This step is to identify the variable set **outcome_predictors** that
+confound causal relation between treatment and outcome, and the variable
+set **selection_predictors** that can induce spurious difference in
 estimates between RWD and RCT data.
 
 ``` r
@@ -157,11 +156,11 @@ library(RCTrep)
 source.data <- RCTrep::source.data
 target.data <- RCTrep::target.data
 
-vars_name <- list(confounders_treatment_name=c("x1","x2","x3","x4","x5","x6"),
+vars_name <- list(outcome_predictors=c("x1","x2","x3","x4","x5","x6"),
                   treatment_name=c('z'),
                   outcome_name=c('y')
 )
-confounders_sampling_name <- c("x1","x2","x3","x4","x5","x6")
+selection_predictors <- c("x1","x2","x3","x4","x5","x6")
 ```
 
 ### Step 2: Estimation
@@ -179,7 +178,6 @@ source.obj <- TEstimator_wrapper(
   data.public = TRUE
 )
 #> y ~ x1 + x2 + x3 + z + z:x1 + z:x2 + z:x3 + z:x6
-#> <environment: 0x00000000194274f0>
 
 target.obj <- TEstimator_wrapper(
   Estimator = "Crude",
@@ -198,7 +196,7 @@ target.obj <- TEstimator_wrapper(
 source.obj.rep <- SEstimator_wrapper(Estimator="Exact",
                                 target.obj=target.obj,
                                 source.obj=source.obj,
-                                confounders_sampling_name=confounders_sampling_name)
+                                selection_predictors=selection_predictors)
 source.obj.rep$EstimateRep(stratification = c("x1","x3","x4","x5"))
 ```
 
@@ -318,8 +316,7 @@ fusion$evaluate()
 #>  8 x1=0,x3=0,x4=1,x5=0 G_computation/glm      184 1.28e+3  0.707 FALSE   TRUE   
 #>  9 x1=0,x3=0,x4=1,x5=1 G_computation/glm/E~   391 9.47e+0  6.21  TRUE    TRUE   
 #> 10 x1=0,x3=0,x4=1,x5=1 G_computation/glm      391 9.68e+2  0.502 FALSE   TRUE   
-#> # ... with 24 more rows
-#> # i Use `print(n = ...)` to see more rows
+#> # i 24 more rows
 fusion$plot()
 ```
 

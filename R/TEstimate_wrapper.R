@@ -3,7 +3,7 @@
 #' @param data A data frame containing variables in \code{vars_name}.
 #' @param Estimator A character specifying an estimator for conditional average treatment effects. The allowed estimators are: \code{"G_computation"}, \code{"IPW"}, and \code{"DR"}.i The corresponding object wll be created by the function \code{TEstimator_wrapper()}. The default is \code{"G_computation"}, which, along with \code{outcome_method="glm"} models the potential outcomes.
 #' @param data A data frame containing variables named in \code{vars_name} and possible other variables.
-#' @param vars_name A list containing four character vectors \code{confounders_treatment_name}, \code{treatment_name}, and \code{outcome_name}. \code{confounders_treatment_name} is a character vector containing the adjustment variables, which, along with \code{TEstimator} and the corresponding \code{outcome_method} or \code{treatment_method} to correct for confounding; \code{outcome_name} is a character vector of length one containing the name of outcome; \code{treatment_name} is a character vector of length one containing the name of treatment.
+#' @param vars_name A list containing four character vectors \code{outcome_predictors}, \code{treatment_name}, and \code{outcome_name}. \code{outcome_predictors} is a character vector containing the adjustment variables, which, along with \code{TEstimator} and the corresponding \code{outcome_method} or \code{treatment_method} to correct for confounding; \code{outcome_name} is a character vector of length one containing the name of outcome; \code{treatment_name} is a character vector of length one containing the name of treatment.
 #' @param name A character indicating the name of the output object
 #' @param outcome_method A character specifying a model for outcome. Possible values are found using \code{names(getModelInfo())}. See \url{http://topepo.github.io/caret/train-models-by-tag.html}. Default is "glm".
 #' @param treatment_method A character specifying a model for treatment. Possible values are found using \code{names(getModelInfo())}. See \url{http://topepo.github.io/caret/train-models-by-tag.html}. Default is "glm".
@@ -18,7 +18,7 @@
 #' @examples
 #' \donttest{
 #' data <- RCTrep::source.data[sample(dim(RCTrep::source.data)[1],500),]
-#' vars_name <- list(confounders_treatment_name = c("x1","x2","x3","x4","x5","x6"),
+#' vars_name <- list(outcome_predictors = c("x1","x2","x3","x4","x5","x6"),
 #'                   treatment_name = c('z'),
 #'                   outcome_name = c('y'))
 #'
@@ -59,7 +59,7 @@ TEstimator_wrapper <- function(Estimator, data, vars_name, name="",
       ...
     )} else if (Estimator == "G_computation") {
     if(outcome_method %in% c("BART","psBART")){
-      class.confounders <- lapply(data[,vars_name$confounders_treatment_name], class)
+      class.confounders <- lapply(data[,vars_name$outcome_predictors], class)
       if('character' %in% class.confounders) stop("You are using BART, character must be converted to factor!")
       for (variable in vars_name$confounder_treatment_name) {
         empty_level <- data %>% count(across(variable)) %>% summarise(empty_level=any(n==0))
@@ -186,7 +186,7 @@ TEstimator_wrapper <- function(Estimator, data, vars_name, name="",
                                                            ordered_result = TRUE
                                                            ))
      }
-    obj$estimates$CATE<- obj$get_CATE(stratification = obj$.__enclos_env__$private$confounders_treatment_name,
+    obj$estimates$CATE<- obj$get_CATE(stratification = obj$.__enclos_env__$private$outcome_predictors,
                                       stratification_joint = TRUE)
    }
 

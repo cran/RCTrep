@@ -1,3 +1,4 @@
+#' @import caret
 SEisw <- R6::R6Class(
   "SEisw",
   inherit = SEstimator,
@@ -9,10 +10,10 @@ SEisw <- R6::R6Class(
 
     initialize = function(target.obj, source.obj,
                           weighting_method="glm",
-                          confounders_sampling_name,
+                          selection_predictors,
                           sampling_formula = NULL,
                           ...){
-      super$initialize(target.obj, source.obj, weighting_method,confounders_sampling_name)
+      super$initialize(target.obj, source.obj, weighting_method,selection_predictors)
       self$sampling_formula <- sampling_formula
       private$trargs <- list(...)
     }

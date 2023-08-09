@@ -28,14 +28,14 @@ TEstimator <- R6::R6Class(
       self$name <- name
       self$data <- df
       self$data$id <- seq(dim(df)[1])
-      private$confounders_treatment_name <- vars_name$confounders_treatment_name
+      private$outcome_predictors <- vars_name$outcome_predictors
       private$treatment_name <- vars_name$treatment_name
       private$outcome_name <- vars_name$outcome_name
       self$statistics <- list(n=dim(df)[1],
                               density_confounders=private$est_joint_denstiy())
     },
 
-    #' @description Replicating the average treatment effect of \code{target.obj}. If \code{stratification} is specified, then replicating the conditional average treatment effect stratified by \code{stratification} and \code{stratification_joint} by weighting based on the residual variables, namely, variables that are specified in \code{confounders_treatment_name} while not in \code{stratification}.
+    #' @description Replicating the average treatment effect of \code{target.obj}. If \code{stratification} is specified, then replicating the conditional average treatment effect stratified by \code{stratification} and \code{stratification_joint} by weighting based on the residual variables, namely, variables that are specified in \code{outcome_predictors} while not in \code{stratification}.
     #' @param target.obj An object of class \code{Estimator} or list.
     #' @param weighting_estimator A string specifying a weighting estimator for generalizing/transporting the estimates to \code{target.obj}. The allowed estimators are: \code{"balancing"}, and \code{"modeling"}.
     #' @param weighting_method A string specifying which model for selection to use. Possible values are found using \code{names(getModelInfo())}. See \url{http://topepo.github.io/caret/train-models-by-tag.html}.
@@ -88,7 +88,7 @@ TEstimator <- R6::R6Class(
     #' @description Plot the forest plot of conditional average treatment effect of subgroups defined by \code{stratification} and \code{stratification_joint}. The method first call public method \code{get_CATE(stratification,stratification_joint)}, then plot the results.
     #' @param stratification An string vector containing variables to define subgroup.
     #' @param stratification_joint An logical defining the subgroup based on joint distribution of variables or univariate distribution in \code{stratification}.
-    plot_CATE = function(stratification = private$confounders_treatment_name,
+    plot_CATE = function(stratification = private$outcome_predictors,
                          stratification_joint = TRUE) {
       #browser()
       data.cate <- self$get_CATE(stratification, stratification_joint)
@@ -147,7 +147,7 @@ TEstimator <- R6::R6Class(
     diagnosis_t_overlap = function(stratification, stratification_joint=TRUE){
       #browser()
       if(missing(stratification)){
-        vars_name <- private$confounders_treatment_name
+        vars_name <- private$outcome_predictors
       } else{
         vars_name <- stratification
       }
@@ -226,7 +226,7 @@ TEstimator <- R6::R6Class(
     diagnosis_y_overlap = function(stratification, stratification_joint=TRUE){
       #browser()
       if(missing(stratification)){
-        stratification <- private$confounders_treatment_name
+        stratification <- private$outcome_predictors
       }
 
       if(test_binary(self$data[,private$outcome_name])){
@@ -349,7 +349,7 @@ TEstimator <- R6::R6Class(
   #-------------------------private fields and methods----------------------------#
   private = list(
 
-    confounders_treatment_name = NA,
+    outcome_predictors = NA,
     treatment_name = NA,
     outcome_name = NA,
     var_method = "sandwitch",
@@ -372,7 +372,7 @@ TEstimator <- R6::R6Class(
       #browser()
       joint_var_internal <-
         self$data %>%
-        group_by(across(all_of(c(private$confounders_treatment_name,private$treatment_name, private$outcome_name)))) %>%
+        group_by(across(all_of(c(private$outcome_predictors,private$treatment_name, private$outcome_name)))) %>%
         summarise(count=n())
       joint_var_internal <- as.data.frame(joint_var_internal)
       return(joint_var_internal)

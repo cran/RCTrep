@@ -6,14 +6,14 @@ SEstimator_pp <- R6::R6Class(
 
     initialize = function(target.obj, source.obj,
                           weighting_method=NULL,
-                          confounders_sampling_name){
-      super$initialize(target.obj, source.obj, weighting_method,confounders_sampling_name)
+                          selection_predictors){
+      super$initialize(target.obj, source.obj, weighting_method,selection_predictors)
     },
 
     diagnosis_s_overlap = function(stratification=NULL, stratification_joint=TRUE){
       #browser()
       if(missing(stratification)){
-        vars_name <- self$confounders_sampling_name
+        vars_name <- self$selection_predictors
       } else{
         vars_name <- stratification
       }
@@ -57,7 +57,7 @@ SEstimator_pp <- R6::R6Class(
     diagnosis_s_ignorability = function(stratification=NULL, stratification_joint=TRUE){
       #browser()
       if(missing(stratification)){
-        vars_name <- self$confounders_sampling_name
+        vars_name <- self$selection_predictors
       } else{
         vars_name <- stratification
       }
@@ -70,19 +70,19 @@ SEstimator_pp <- R6::R6Class(
       weight <- private$get_weight(
         source = private$source.obj$data,
         target = private$target.obj$data,
-        vars_weighting = self$confounders_sampling_name
+        vars_weighting = self$selection_predictors
       )
 
       p.source <- private$source.obj$data %>%
         bind_cols(weight = weight) %>%
-        group_by(across(all_of(self$confounders_sampling_name))) %>%
+        group_by(across(all_of(self$selection_predictors))) %>%
         summarise(size.agg=sum(weight*size)) %>%
         ungroup() %>%
         mutate(prop=size.agg/sum(size.agg),
                study=private$source.obj$name)
 
       p.target <- private$target.obj$data %>%
-        group_by(across(all_of(self$confounders_sampling_name))) %>%
+        group_by(across(all_of(self$selection_predictors))) %>%
         summarise(size.agg=sum(size)) %>%
         ungroup() %>%
         mutate(prop=size.agg/sum(size.agg),

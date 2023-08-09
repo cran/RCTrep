@@ -12,7 +12,7 @@ RCTREP(
   source.name = "RWD",
   target.name = "RCT",
   vars_name,
-  confounders_sampling_name,
+  selection_predictors,
   outcome_method = "glm",
   treatment_method = "glm",
   weighting_method = "glm",
@@ -31,7 +31,7 @@ RCTREP(
 \arguments{
 \item{TEstimator}{A character specifying an estimator for conditional average treatment effects. The allowed estimators for \code{TEstimator} are: \code{"G_computation"}, \code{"IPW"}, and \code{"DR"}. The corresponding object will be created by the wrapper function \code{TEstimator_wrapper()}. The default is \code{"G_computation"}, which, along with \code{outcome_method="glm"} models the potential outcomes.}
 
-\item{SEstimator}{A character specifying an estimator for weight. The allowed estimators are: \code{"Exact"}, \code{"Subclass"}, \code{"ISW"}. The default is \code{"Exact"}, which, implements the exact matching on variables in \code{confounders_sampling_name} to balance the population covariates between \code{source.data} and \code{target.data}.}
+\item{SEstimator}{A character specifying an estimator for weight. The allowed estimators are: \code{"Exact"}, \code{"Subclass"}, \code{"ISW"}. The default is \code{"Exact"}, which, implements the exact matching on variables in \code{selection_predictors} to balance the population covariates between \code{source.data} and \code{target.data}.}
 
 \item{source.data}{A data frame containing variables named in \code{vars_name} and possible other variables. \code{source.obj} is instantiated using \code{source.data}.}
 
@@ -41,9 +41,9 @@ RCTREP(
 
 \item{target.name}{A character indicating the name of \code{target.obj}.}
 
-\item{vars_name}{A list containing four vectors \code{confounders_treatment_name}, \code{treatment_name}, and \code{outcome_name}. \code{confounders_treatment_name} is a character vector containing the adjustment variables, which, along with \code{TEstimator} and the corresponding \code{outcome_method} or \code{treatment_method} to correct for confounding; \code{outcome_name} is a character vector of length one containing the variable name of outcome; \code{treatment_name} is a character vector of length one containing the variable name of treatment.}
+\item{vars_name}{A list containing four vectors \code{outcome_predictors}, \code{treatment_name}, and \code{outcome_name}. \code{outcome_predictors} is a character vector containing the adjustment variables, which, along with \code{TEstimator} and the corresponding \code{outcome_method} or \code{treatment_method} to correct for confounding; \code{outcome_name} is a character vector of length one containing the variable name of outcome; \code{treatment_name} is a character vector of length one containing the variable name of treatment.}
 
-\item{confounders_sampling_name}{a character vector specifying variable names. The weights are estimated based on the variables.}
+\item{selection_predictors}{a character vector specifying variable names. The weights are estimated based on the variables.}
 
 \item{outcome_method, treatment_method, weighting_method}{A character specifying model for outcome, treatment, and weight to use. Possible values are found using \code{names(getModelInfo())}. See \url{http://topepo.github.io/caret/train-models-by-tag.html}.}
 
@@ -65,8 +65,6 @@ RCTREP(
 }
 \value{
 A list of length three with three R6 class objects, \code{source.obj}, \code{target.obj} and \code{source.rep.obj}
-
-
 }
 \description{
 The function \code{RCTREP} is used to validate the estimates of treatment effects obtained from observational data by comparing to estimates from a target randomized control trial. The function currently implements the following types of estimators of treatment effects: G_computation, inverse propensity score weighting (IPW), and augmented propensity score weighting. The function implements the following three types of weighting estimators to compare the resulting estimates of treatment effects from RWD to the target RCT: exact matching weights, inverse selection probability weighting, and sub-classification. Since we regard the sample in the RCT as the target population, weights for each individual in observational data is \eqn{p/(1-p)} so that the weighted population of observational data is representative to the target population.
@@ -80,11 +78,11 @@ output <- RCTREP(TEstimator = "G_computation", SEstimator = "Exact",
                  outcome_method = "BART",
                  source.data = RCTrep::source.data[sample(dim(RCTrep::source.data)[1],500),],
                  target.data = RCTrep::target.data[sample(dim(RCTrep::target.data)[1],500),],
-                 vars_name = list(confounders_treatment_name =
+                 vars_name = list(outcome_predictors =
                                     c("x1","x2","x3","x4","x5","x6"),
                                  treatment_name = c('z'),
                                  outcome_name = c('y')),
-                 confounders_sampling_name = c("x2","x6"),
+                 selection_predictors = c("x2","x6"),
                  stratification = c("x1","x3","x4","x5"),
                  stratification_joint = TRUE)
 output$target.obj

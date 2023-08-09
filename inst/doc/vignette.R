@@ -14,11 +14,11 @@ library(RCTrep)
 #                   outcome_method = "BART",
 #                   source.data = RCTrep::source.data,
 #                   target.data = RCTrep::target.data,
-#                   vars_name = list(confounders_treatment_name =
+#                   vars_name = list(outcome_predictors =
 #                                      c("x1","x2","x3","x4","x5","x6"),
 #                                    treatment_name = c('z'),
 #                                    outcome_name = c('y')),
-#                   confounders_sampling_name = c("x2","x6"),
+#                   selection_predictors = c("x2","x6"),
 #                   stratification = c("x1","x3","x4","x5"),
 #                   stratification_joint = TRUE)
 #  
@@ -32,7 +32,7 @@ library(RCTrep)
 #  source.data <- RCTrep::source.data
 #  target.data <- RCTrep::target.data
 #  
-#  vars_name <- list(confounders_treatment_name =
+#  vars_name <- list(outcome_predictors =
 #                      c("x1","x2","x3","x4","x5","x6"),
 #                    treatment_name = c('z'),
 #                    outcome_name = c('y')
@@ -62,7 +62,7 @@ library(RCTrep)
 #  source.obj.rep <- SEstimator_wrapper(Estimator = "Exact",
 #                                       target.obj = target.obj,
 #                                       source.obj = source.obj,
-#                                       confounders_sampling_name = c("x2","x6"))
+#                                       selection_predictors = c("x2","x6"))
 #  source.obj.rep$EstimateRep(stratification = c("x1","x3","x4","x5"))
 
 ## ----eval=FALSE---------------------------------------------------------------
@@ -87,7 +87,7 @@ library(RCTrep)
 #  source.data <- RCTrep::source.data
 #  target.data <- RCTrep::target.data
 #  
-#  vars_name <- list(confounders_treatment_name = c("x1","x2","x3","x4","x5","x6"),
+#  vars_name <- list(outcome_predictors = c("x1","x2","x3","x4","x5","x6"),
 #                    treatment_name = c('z'),
 #                    outcome_name = c('y')
 #  )
@@ -134,21 +134,21 @@ library(RCTrep)
 #  )
 #  
 #  strata <- c("x1","x4")
-#  confounders_sampling_name <- c("x2","x6")
+#  selection_predictors <- c("x2","x6")
 #  
 #  source.gc.exact <- SEstimator_wrapper(Estimator = "Exact",
 #                                        target.obj = target.obj,
 #                                        source.obj = source.obj.gc,
-#                                        confounders_sampling_name =
-#                                          confounders_sampling_name)
+#                                        selection_predictors =
+#                                          selection_predictors)
 #  source.gc.exact$EstimateRep(stratification = strata,
 #                              stratification_joint = TRUE)
 #  
 #  source.gc.isw <- SEstimator_wrapper(Estimator = "ISW",
 #                                      target.obj = target.obj,
 #                                      source.obj = source.obj.gc,
-#                                      confounders_sampling_name =
-#                                        confounders_sampling_name,
+#                                      selection_predictors =
+#                                        selection_predictors,
 #                                      method = "glm")
 #  source.gc.isw$EstimateRep(stratification = strata,
 #                            stratification_joint = TRUE)
@@ -156,24 +156,24 @@ library(RCTrep)
 #  source.gc.subclass <- SEstimator_wrapper(Estimator = "Subclass",
 #                                           target.obj = target.obj,
 #                                           source.obj = source.obj.gc,
-#                                           confounders_sampling_name =
-#                                             confounders_sampling_name)
+#                                           selection_predictors =
+#                                             selection_predictors)
 #  source.gc.subclass$EstimateRep(stratification = strata,
 #                                 stratification_joint = TRUE)
 #  
 #  source.ipw.exact <- SEstimator_wrapper(Estimator = "Exact",
 #                                         target.obj = target.obj,
 #                                         source.obj = source.obj.ipw,
-#                                         confounders_sampling_name =
-#                                           confounders_sampling_name)
+#                                         selection_predictors =
+#                                           selection_predictors)
 #  source.ipw.exact$EstimateRep(stratification = strata,
 #                               stratification_joint = TRUE)
 #  
 #  source.ipw.isw <- SEstimator_wrapper(Estimator = "ISW",
 #                                       target.obj = target.obj,
 #                                       source.obj = source.obj.ipw,
-#                                       confounders_sampling_name =
-#                                         confounders_sampling_name,
+#                                       selection_predictors =
+#                                         selection_predictors,
 #                                       method = "glm")
 #  source.ipw.isw$EstimateRep(stratification = strata,
 #                             stratification_joint = TRUE)
@@ -181,24 +181,24 @@ library(RCTrep)
 #  source.ipw.subclass <- SEstimator_wrapper(Estimator = "Subclass",
 #                                            target.obj = target.obj,
 #                                            source.obj = source.obj.ipw,
-#                                            confounders_sampling_name =
-#                                              confounders_sampling_name)
+#                                            selection_predictors =
+#                                              selection_predictors)
 #  source.ipw.subclass$EstimateRep(stratification = strata,
 #                                  stratification_joint = TRUE)
 #  
 #  source.dr.exact <- SEstimator_wrapper(Estimator = "Exact",
 #                                        target.obj = target.obj,
 #                                        source.obj = source.obj.dr,
-#                                        confounders_sampling_name =
-#                                          confounders_sampling_name)
+#                                        selection_predictors =
+#                                          selection_predictors)
 #  source.dr.exact$EstimateRep(stratification = strata,
 #                              stratification_joint = TRUE)
 #  
 #  source.dr.isw <- SEstimator_wrapper(Estimator = "ISW",
 #                                      target.obj = target.obj,
 #                                      source.obj = source.obj.dr,
-#                                      confounders_sampling_name =
-#                                        confounders_sampling_name,
+#                                      selection_predictors =
+#                                        selection_predictors,
 #                                      method = "glm")
 #  source.dr.isw$EstimateRep(stratification = strata,
 #                            stratification_joint = TRUE)
@@ -206,8 +206,8 @@ library(RCTrep)
 #  source.dr.subclass <- SEstimator_wrapper(Estimator = "Subclass",
 #                                           target.obj = target.obj,
 #                                           source.obj = source.obj.dr,
-#                                           confounders_sampling_name =
-#                                             confounders_sampling_name)
+#                                           selection_predictors =
+#                                             selection_predictors)
 #  source.dr.subclass$EstimateRep(stratification = strata,
 #                                 stratification_joint = TRUE)
 #  
@@ -230,11 +230,11 @@ library(RCTrep)
 #  target.data <- RCTrep::target.data
 #  
 #  # Identification
-#  vars_name <- list(confounders_treatment_name = c("x1","x2","x3","x4","x5","x6"),
+#  vars_name <- list(outcome_predictors = c("x1","x2","x3","x4","x5","x6"),
 #                    treatment_name = c('z'),
 #                    outcome_name = c('y')
 #  )
-#  confounders_sampling_name <- c("x2","x6")
+#  selection_predictors <- c("x2","x6")
 #  
 #  # Estimate conditional average treatment effect
 #  source.obj <- TEstimator_wrapper(
@@ -263,8 +263,8 @@ library(RCTrep)
 #  source.rep.obj <- SEstimator_wrapper(Estimator = "Exact",
 #                                       target.obj = target.obj,
 #                                       source.obj = source.obj,
-#                                       confounders_sampling_name =
-#                                         confounders_sampling_name)
+#                                       selection_predictors =
+#                                         selection_predictors)
 #  source.rep.obj$EstimateRep(stratification = strata, stratification_joint = TRUE)
 #  
 #  # Validate
@@ -282,7 +282,7 @@ library(RCTrep)
 #  target.data <- RCTrep::target.data
 #  
 #  # Identification
-#  vars_name <- list(confounders_treatment_name = c("x1","x2","x3","x4","x5","x6"),
+#  vars_name <- list(outcome_predictors = c("x1","x2","x3","x4","x5","x6"),
 #                    treatment_name = c('z'),
 #                    outcome_name = c('y')
 #  )
@@ -345,7 +345,7 @@ library(RCTrep)
 #  source.rep.obj <- SEstimator_wrapper(Estimator="Exact",
 #                                       target.obj=target.obj,
 #                                       source.obj=source.obj,
-#                                       confounders_sampling_name=c("x2","x6"))
+#                                       selection_predictors=c("x2","x6"))
 #  source.rep.obj$EstimateRep(stratification = vars_rct,
 #                             stratification_joint = FALSE)
 #  

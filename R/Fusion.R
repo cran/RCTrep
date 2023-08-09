@@ -6,14 +6,14 @@
 #' @returns an R6 object
 #' @examples
 #' \donttest{
-#' source.data <- RCTrep::source.data[sample(dim(RCTrep::source.data)[1],500),]
-#' target.data <- RCTrep::target.data[sample(dim(RCTrep::target.data)[1],500),]
+#' source.data <- RCTrep::source.data
+#' target.data <- RCTrep::target.data
 #'
-#' vars_name <- list(confounders_treatment_name = c("x1","x2","x3","x4","x5","x6"),
+#' vars_name <- list(outcome_predictors = c("x1","x2","x3","x4","x5","x6"),
 #'                   treatment_name = c('z'),
 #'                   outcome_name = c('y')
 #' )
-#' confounders_sampling_name <- c("x2","x6")
+#' selection_predictors <- c("x2","x6")
 #'
 #' source.obj <- TEstimator_wrapper(
 #'  Estimator = "G_computation",
@@ -38,8 +38,8 @@
 #' source.rep.obj <- SEstimator_wrapper(Estimator = "Exact",
 #'                                      target.obj = target.obj,
 #'                                      source.obj = source.obj,
-#'                                      confounders_sampling_name =
-#'                                      confounders_sampling_name)
+#'                                      selection_predictors =
+#'                                      selection_predictors)
 #' source.rep.obj$EstimateRep(stratification = strata, stratification_joint = TRUE)
 #'
 #' fusion <- Fusion$new(target.obj,
@@ -73,7 +73,7 @@ Fusion <- R6::R6Class(
       # on the same level defined in object$estimates$CATE as the object of class SEstimator
       # else, if there is no object of class SEstimator, meaning we are comparing
       # objects of class TEstimator without making covariates balanced across objects.
-      # then we are comparing estimates on the level of confounders_treatment_name
+      # then we are comparing estimates on the level of outcome_predictors
       # across objects of class TEstimator, or we specify stratification and stratification_joint
       if(SEstimator.id>0){
         if("name" %in% colnames(objs[[SEstimator.id]]$estimates$CATE)){
@@ -86,8 +86,8 @@ Fusion <- R6::R6Class(
         }
       } else if (TEstimator.id>0) {
         if(is.null(stratification)){
-          message("You do not specify variable for group_by, then we specify stratification==confounders_treatment_name")
-          self$stratification <- objs[[TEstimator.id]]$.__enclos_env__$private$confounders_treatment_name
+          message("You do not specify variable for group_by, then we specify stratification==outcome_predictors")
+          self$stratification <- objs[[TEstimator.id]]$.__enclos_env__$private$outcome_predictors
           self$stratification_joint <- TRUE
         } else {
           self$stratification <- stratification
@@ -197,7 +197,7 @@ Fusion <- R6::R6Class(
       for(obj in list(...)){
         if("TEstimator" %in% class(obj)){
           obj.data <- obj$get_CATE(self$stratification,self$stratification_joint) %>%
-            mutate(estimator=obj$id, study=obj$name) %>% select(-c("pt","py"))
+            mutate(estimator=obj$id, study=obj$name) #%>% select(-c("pt","py"))
           if("pt" %in% colnames(obj.data)) obj.data <- obj.data %>% select(-pt)
           if("py" %in% colnames(obj.data)) obj.data <- obj.data %>% select(-py)
         } else if ("SEstimator" %in% class(obj)){

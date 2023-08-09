@@ -1,4 +1,6 @@
 #' @importFrom PSweight PSweight
+#' @import BART
+#' @import caret
 IPW <- R6::R6Class(
   "IPW",
   inherit = TEstimator,
@@ -13,7 +15,7 @@ IPW <- R6::R6Class(
       private$method <- treatment_method
       private$formula <- treatment_formula
       private$confounders_treatment_factor <-
-        private$confounders_treatment_name[sapply(self$data[,private$confounders_treatment_name],
+        private$outcome_predictors[sapply(self$data[,private$outcome_predictors],
                                                                                         is.factor)]
       if(private$method == "BART"){
         model_ps <- private$fit_BART(...)
@@ -24,7 +26,7 @@ IPW <- R6::R6Class(
         self$ps.est <- private$est_ps()
       }
       private$set_ATE()
-      private$set_CATE(private$confounders_treatment_name,TRUE)
+      private$set_CATE(private$outcome_predictors,TRUE)
       private$isTrial <- isTrial
       self$id <- paste(self$id, private$method, sep = "/")
     },
@@ -32,13 +34,13 @@ IPW <- R6::R6Class(
     diagnosis_t_ignorability = function(stratification, stratification_joint=TRUE){
       #browser()
       if(missing(stratification)){
-        vars_name <- private$confounders_treatment_name
+        vars_name <- private$outcome_predictors
       } else{
         vars_name <- stratification
       }
 
       message("to be continued... This function is to check if
-              confounders_treatment_name are balanced between treatment and control groups")
+              outcome_predictors are balanced between treatment and control groups")
 
       weight <- ifelse(self$data[,private$treatment_name]==1, 1/self$ps.est, 1/(1-self$ps.est))
       weight_sum_1 <- sum(weight[self$data[,private$treatment_name]==1])
@@ -49,7 +51,7 @@ IPW <- R6::R6Class(
       p.t1 <- self$data %>%
         bind_cols(weight=weight) %>%
         filter(self$data[,private$treatment_name] == 1) %>%
-        group_by(across(all_of(private$confounders_treatment_name))) %>%
+        group_by(across(all_of(private$outcome_predictors))) %>%
         summarise(size.agg=sum(weight)) %>%
         ungroup() %>%
         mutate(prop=size.agg/sum(size.agg),
@@ -58,7 +60,7 @@ IPW <- R6::R6Class(
       p.t0 <- self$data %>%
         bind_cols(weight=weight) %>%
         filter(self$data[,private$treatment_name] == 0) %>%
-        group_by(across(all_of(private$confounders_treatment_name))) %>%
+        group_by(across(all_of(private$outcome_predictors))) %>%
         summarise(size.agg=sum(weight)) %>%
         ungroup() %>%
         mutate(prop=size.agg/sum(size.agg),
@@ -165,7 +167,7 @@ IPW <- R6::R6Class(
       #browser()
       if (is.null(private$formula)) {
         model <- caret::train(
-          x = self$data[, private$confounders_treatment_name],
+          x = self$data[, private$outcome_predictors],
           y = self$data[, private$treatment_name],
           method = private$method,
           ...
@@ -189,7 +191,7 @@ IPW <- R6::R6Class(
 
     fit_BART = function(...) {
       #browser()
-      x.train <- self$data[, c(private$confounders_treatment_name)]
+      x.train <- self$data[, c(private$outcome_predictors)]
       if(length(private$confounders_treatment_factor)>0){
         x.train <- fastDummies::dummy_cols(x.train, select_columns= private$confounders_treatment_factor,
                                            remove_selected_columns = TRUE)

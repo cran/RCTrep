@@ -5,47 +5,47 @@
 #' @returns an interactive interface visualizing results of four steps
 #' @examples
 #' \donttest{
-#' source.data <- RCTrep::source.data[sample(dim(RCTrep::source.data)[1],500),]
-#' target.data <- RCTrep::target.data[sample(dim(RCTrep::target.data)[1],500),]
-#'
-#' vars_name <- list(confounders_treatment_name = c("x1","x2","x3","x4","x5","x6"),
-#'                   treatment_name = c('z'),
-#'                   outcome_name = c('y')
-#' )
-#' confounders_sampling_name <- c("x2","x6")
-#'
-#' source.obj <- TEstimator_wrapper(
-#'  Estimator = "G_computation",
-#'  data = source.data,
-#'  vars_name = vars_name,
-#'  outcome_method = "glm",
-#'  outcome_form=y ~ x1 + x2 + x3 + z + z:x1 + z:x2 +z:x3+ z:x6,
-#'  name = "RWD",
-#'  data.public = FALSE
-#' )
-#'
-#' target.obj <- TEstimator_wrapper(
-#'  Estimator = "Crude",
-#'  data = target.data,
-#'  vars_name = vars_name,
-#'  name = "RCT",
-#'  data.public = FALSE,
-#'  isTrial = TRUE
-#' )
-#'
-#' strata <- c("x1","x4")
-#' source.rep.obj <- SEstimator_wrapper(Estimator = "Exact",
-#'                                      target.obj = target.obj,
-#'                                      source.obj = source.obj,
-#'                                      confounders_sampling_name =
-#'                                      confounders_sampling_name)
-#' source.rep.obj$EstimateRep(stratification = strata, stratification_joint = TRUE)
-#'
-#' call_dashboard(source.obj = source.obj,
-#'                target.obj = target.obj,
-#'                source.obj.rep = source.obj.rep)
-#'
-#' }
+# source.data <- RCTrep::source.data
+# target.data <- RCTrep::target.data
+#
+# vars_name <- list(outcome_predictors = c("x1","x2","x3","x4","x5","x6"),
+#                   treatment_name = c('z'),
+#                   outcome_name = c('y')
+# )
+# selection_predictors <- c("x2","x6")
+#
+# source.obj <- TEstimator_wrapper(
+#  Estimator = "G_computation",
+#  data = source.data,
+#  vars_name = vars_name,
+#  outcome_method = "glm",
+#  outcome_form=y ~ x1 + x2 + x3 + z + z:x1 + z:x2 +z:x3+ z:x6,
+#  name = "RWD",
+#  data.public = TRUE
+# )
+#
+# target.obj <- TEstimator_wrapper(
+#  Estimator = "Crude",
+#  data = target.data,
+#  vars_name = vars_name,
+#  name = "RCT",
+#  data.public = FALSE,
+#  isTrial = TRUE
+# )
+#
+# strata <- c("x1","x4")
+# source.obj.rep <- SEstimator_wrapper(Estimator = "Exact",
+#                                      target.obj = target.obj,
+#                                      source.obj = source.obj,
+#                                      selection_predictors =
+#                                      selection_predictors)
+# source.obj.rep$EstimateRep(stratification = strata, stratification_joint = TRUE)
+#
+# call_dashboard(source.obj = source.obj,
+#                target.obj = target.obj,
+#                source.obj.rep = source.obj.rep)
+#
+# }
 #' @export
 #' @import shiny
 #' @import shinydashboard
@@ -55,18 +55,18 @@ call_dashboard <- function(source.obj = NULL,
   shinyApp(
     ui <- dashboardPage(
       title = "ShinyAB",
-      dashboardHeader(title = "Validation of estimators for conditional average treatment effect using observational data and RCT data",titleWidth=1000),
+      dashboardHeader(title = "Validation of estimators for conditional average treatment effects using observational data and RCT data",titleWidth=1000),
       dashboardSidebar(disable =TRUE),
       dashboardBody(
         fluidRow(
           box(
-            title = "Identification", width = 12,solidHeader = T, status = "primary",
+            title = "Set-selection", width = 12,solidHeader = T, status = "primary",
             fluidRow(
-              column(width = 4, box(title = "Confounders X",
+              column(width = 4, box(title = "Outcome predictors",
                                     solidHeader = T, status = "info",
                                     checkboxGroupInput(
                                       inputId = "diagnosis_t_stratification",
-                                      label = "Confounders",
+                                      label = " ",
                                       inline = FALSE,
                                       width = NULL
                                     ),
@@ -76,11 +76,11 @@ call_dashboard <- function(source.obj = NULL,
                                                              "Individual"=FALSE),
                                                  selected = TRUE),
                                     actionButton(inputId = "diagnosis_t_assumptions_go",label = "Go"))),
-              column(width = 4, box(title = "Effect modifiers Xs",
+              column(width = 4, box(title = "Selection predictors",
                                     solidHeader = T, status = "info",
                                     checkboxGroupInput(
                                       inputId = "diagnosis_s_stratification",
-                                      label = "Effect modifiers",
+                                      label = " ",
                                       inline = FALSE,
                                       width = NULL
                                     ),
@@ -90,11 +90,11 @@ call_dashboard <- function(source.obj = NULL,
                                                              "Individual"=FALSE),
                                                  selected = TRUE),
                                     actionButton(inputId = "diagnosis_s_assumptions_go",label = "Go"))),
-              column(width = 4, box(title = "Stratification Xh",
+              column(width = 4, box(title = "Stratification",
                                     solidHeader = T, status = "info",
                                     checkboxGroupInput(
                                       inputId = "validation_stratification",
-                                      label = "Stratification by",
+                                      label = " ",
                                       inline = FALSE,
                                       width = NULL
                                     ),
@@ -276,19 +276,19 @@ call_dashboard <- function(source.obj = NULL,
 
       updateCheckboxGroupInput(
         session, "diagnosis_t_stratification",
-        choices = source.obj$.__enclos_env__$private$confounders_treatment_name,
-        selected = source.obj$.__enclos_env__$private$confounders_treatment_name
+        choices = source.obj$.__enclos_env__$private$outcome_predictors,
+        selected = source.obj$.__enclos_env__$private$outcome_predictors
       )
 
       updateCheckboxGroupInput(
         session, "diagnosis_s_stratification",
-        choices = source.obj$.__enclos_env__$private$confounders_treatment_name,
-        selected = source.obj.rep$confounders_sampling_name
+        choices = source.obj$.__enclos_env__$private$outcome_predictors,
+        selected = source.obj.rep$selection_predictors
       )
 
       updateCheckboxGroupInput(
         session, "validation_stratification",
-        choices = source.obj$.__enclos_env__$private$confounders_treatment_name,
+        choices = source.obj$.__enclos_env__$private$outcome_predictors,
         selected = NULL
       )
     }

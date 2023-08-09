@@ -12,19 +12,28 @@ TEstimator_pp <- R6::R6Class(
       self$data = self$estimates$CATE
       #private$data =
       self$data$id = seq(dim(self$data)[1])
-      private$confounders_treatment_name = obj$.__enclos_env__$private$confounders_treatment_name
+      private$outcome_predictors = obj$.__enclos_env__$private$outcome_predictors
       private$treatment_name = obj$.__enclos_env__$private$treatment_name
       private$outcome_name = obj$.__enclos_env__$private$outcome_name
-      private$diagnosis_t_ignorability_inherent = obj$diagnosis_t_ignorability(private$confounders_treatment_name)
+      private$diagnosis_t_ignorability_inherent = obj$diagnosis_t_ignorability(private$outcome_predictors)
       private$isTrial = obj$.__enclos_env__$private$isTrial
       # IPW can't use aggregate since it has non-overlap group, need some data cleaning
+    },
+
+    get_CATE = function(stratification, stratification_joint=TRUE) {
+      if (stratification_joint) {
+        CATE_mean_se <- private$est_CATEestimation4JointStratification(stratification)
+      } else {
+        CATE_mean_se <- private$est_CATEestimation4SeperateStratification(stratification)
+      }
+      return(CATE_mean_se)
     },
 
     diagnosis_t_ignorability = function(){
       private$diagnosis_t_ignorability_inherent
     },
 
-    diagnosis_t_overlap = function(stratification=private$confounders_treatment_name, stratification_joint=TRUE){
+    diagnosis_t_overlap = function(stratification=private$outcome_predictors, stratification_joint=TRUE){
       #browser()
       vars_name <- stratification
       # when use group_by(across(all_of(...))), ... should be a vector and
@@ -101,7 +110,7 @@ TEstimator_pp <- R6::R6Class(
 
       message("Sorry, we only support binary outcome for now.")
       if(missing(stratification)){
-        vars_name <- private$confounders_treatment_name
+        vars_name <- private$outcome_predictors
       } else{
         vars_name <- stratification
       }
@@ -156,7 +165,7 @@ TEstimator_pp <- R6::R6Class(
   ),
 
   private = list(
-    confounders_treatment_name = NA,
+    outcome_predictors = NA,
     diagnosis_t_ignorability_inherent = list(),
 
     est_ATE_SE = function(index) {
@@ -243,6 +252,76 @@ TEstimator_pp <- R6::R6Class(
           theta[1]-theta[2] - theta[3]
         )
       }
+    },
+
+    est_CATEestimation4JointStratification = function(stratification) {
+      #browser()
+      group_data <- self$data %>%
+        group_by(across(all_of(stratification)))
+      group_strata <- group_data %>% group_keys()
+      group_id <- group_data %>% group_indices()
+      n_groups <- dim(group_strata)[1]
+      cate <- se <- size <- y1.hat <- y0.hat <- pt <- py <- NULL
+      for (i in seq(n_groups)) {
+        subgroup.id.in.data <- self$data[group_id == i, "id"]
+        cate_y1_y0_se <- private$est_ATE_SE(subgroup.id.in.data)
+        y1.hat[i] <- cate_y1_y0_se$y1.hat
+        y0.hat[i] <- cate_y1_y0_se$y0.hat
+        cate[i] <- cate_y1_y0_se$est
+        se[i] <- cate_y1_y0_se$se
+        size[i] <- sum(self$data[group_id == i, "size"])
+        pt[i] <- mean(as.numeric(as.character(self$data[group_id == i, private$treatment_name])))
+        py[i] <- mean(as.numeric(as.character(self$data[group_id == i, private$outcome_name])))
+        # print(i)
+      }
+      CATE_mean_se <- cbind(group_strata, y1.hat, y0.hat, cate, se, size, pt, py)
+      CATE_mean_se <- as.data.frame(CATE_mean_se)
+      # browser()
+      # colnames(CATE_mean_se) <- c(colnames(patterns),"cate","se")
+      return(CATE_mean_se)
+    },
+
+    est_CATEestimation4SeperateStratification = function(stratification) {
+      # browser()
+      group_var <- group_level <- cate <- se <- size <- y1.hat <- y0.hat <- density <- pt <- py <- NULL
+      i <- 1
+      for (var_name in stratification) {
+        group_data <- self$data %>% group_by(across(var_name))
+        group_strata <- group_data %>% group_keys()
+        group_id_4each_obs <- group_data %>% group_indices()
+        n_groups <- dim(group_strata)[1]
+        #group_sample_size <- group_size(group_data)
+        for (group_id in seq(n_groups)) {
+          subgroup.id.in.data <- self$data[group_id_4each_obs == group_id, "id"]
+          group_var[i] <- var_name
+          group_level[i] <- group_strata[group_id, 1]
+          cate_y1_y0_se <- private$est_ATE_SE(subgroup.id.in.data)
+          y1.hat[i] <- cate_y1_y0_se$y1.hat
+          y0.hat[i] <- cate_y1_y0_se$y0.hat
+          cate[i] <- cate_y1_y0_se$est
+          se[i] <- cate_y1_y0_se$se
+          size[i] <- sum(self$data[group_id_4each_obs == group_id, "size"])
+          pt[i] <- mean(as.numeric(as.character(self$data[group_id_4each_obs == group_id, private$treatment_name])))
+          py[i] <- mean(as.numeric(as.character(self$data[group_id_4each_obs == group_id, private$outcome_name])))
+
+          i <- i + 1
+        }
+      }
+      # the output element from group_keys() is not a vector/numeric, hence needs to convert to data.frame reshape(4*1)
+      group_level <- t(as.data.frame(group_level))
+      CATE_mean_se <- data.frame(
+        name = group_var,
+        value = group_level,
+        y1.hat = y1.hat,
+        y0.hat = y0.hat,
+        cate = cate,
+        se = se,
+        size = size,
+        pt = pt,
+        py = py,
+        stringsAsFactors = FALSE
+      )
+      return(CATE_mean_se)
     }
 
   )

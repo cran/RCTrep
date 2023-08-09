@@ -6,13 +6,13 @@
 #'
 #'
 #' @param TEstimator A character specifying an estimator for conditional average treatment effects. The allowed estimators for \code{TEstimator} are: \code{"G_computation"}, \code{"IPW"}, and \code{"DR"}. The corresponding object will be created by the wrapper function \code{TEstimator_wrapper()}. The default is \code{"G_computation"}, which, along with \code{outcome_method="glm"} models the potential outcomes.
-#' @param SEstimator A character specifying an estimator for weight. The allowed estimators are: \code{"Exact"}, \code{"Subclass"}, \code{"ISW"}. The default is \code{"Exact"}, which, implements the exact matching on variables in \code{confounders_sampling_name} to balance the population covariates between \code{source.data} and \code{target.data}.
+#' @param SEstimator A character specifying an estimator for weight. The allowed estimators are: \code{"Exact"}, \code{"Subclass"}, \code{"ISW"}. The default is \code{"Exact"}, which, implements the exact matching on variables in \code{selection_predictors} to balance the population covariates between \code{source.data} and \code{target.data}.
 #' @param source.data A data frame containing variables named in \code{vars_name} and possible other variables. \code{source.obj} is instantiated using \code{source.data}.
 #' @param target.data A data frame containing variables named in \code{vars_name} and possible other variables. \code{target.obj} is instantiated using \code{target.data}.
 #' @param source.name A character indicating the name of \code{source.obj}.
 #' @param target.name A character indicating the name of \code{target.obj}.
-#' @param vars_name A list containing four vectors \code{confounders_treatment_name}, \code{treatment_name}, and \code{outcome_name}. \code{confounders_treatment_name} is a character vector containing the adjustment variables, which, along with \code{TEstimator} and the corresponding \code{outcome_method} or \code{treatment_method} to correct for confounding; \code{outcome_name} is a character vector of length one containing the variable name of outcome; \code{treatment_name} is a character vector of length one containing the variable name of treatment.
-#' @param confounders_sampling_name a character vector specifying variable names. The weights are estimated based on the variables.
+#' @param vars_name A list containing four vectors \code{outcome_predictors}, \code{treatment_name}, and \code{outcome_name}. \code{outcome_predictors} is a character vector containing the adjustment variables, which, along with \code{TEstimator} and the corresponding \code{outcome_method} or \code{treatment_method} to correct for confounding; \code{outcome_name} is a character vector of length one containing the variable name of outcome; \code{treatment_name} is a character vector of length one containing the variable name of treatment.
+#' @param selection_predictors a character vector specifying variable names. The weights are estimated based on the variables.
 #' @param outcome_method,treatment_method,weighting_method A character specifying model for outcome, treatment, and weight to use. Possible values are found using \code{names(getModelInfo())}. See \url{http://topepo.github.io/caret/train-models-by-tag.html}.
 #' @param outcome_formula,treatment_formula,selection_formula An optional object of class \code{formula} describing the outcome model specification, treatment model specification, and selection model specification.
 #' @param stratification An optional character vector containing variables to select subgroups. \code{source.obj} will compute both weighted and unweighted average treatment effects of the subgroups, \code{targe.obj} will calculate the average treatment effects of the subgroups.
@@ -31,11 +31,11 @@
 #'                  outcome_method = "BART",
 #'                  source.data = RCTrep::source.data[sample(dim(RCTrep::source.data)[1],500),],
 #'                  target.data = RCTrep::target.data[sample(dim(RCTrep::target.data)[1],500),],
-#'                  vars_name = list(confounders_treatment_name =
+#'                  vars_name = list(outcome_predictors =
 #'                                     c("x1","x2","x3","x4","x5","x6"),
 #'                                  treatment_name = c('z'),
 #'                                  outcome_name = c('y')),
-#'                  confounders_sampling_name = c("x2","x6"),
+#'                  selection_predictors = c("x2","x6"),
 #'                  stratification = c("x1","x3","x4","x5"),
 #'                  stratification_joint = TRUE)
 #' output$target.obj
@@ -49,7 +49,7 @@ RCTREP <- function(TEstimator = "G_computation", SEstimator = "Exact",
                    source.data = source.data, target.data = target.data,
                    source.name = "RWD", target.name = "RCT",
                    vars_name,
-                   confounders_sampling_name,
+                   selection_predictors,
                    outcome_method = "glm", treatment_method = "glm", weighting_method = "glm",
                    outcome_formula = NULL, treatment_formula = NULL, selection_formula = NULL,
                    stratification = NULL, stratification_joint = FALSE,
@@ -80,7 +80,7 @@ RCTREP <- function(TEstimator = "G_computation", SEstimator = "Exact",
   source.rep.obj <- SEstimator_wrapper(Estimator=SEstimator,
                                        target.obj=target.obj,
                                        source.obj=source.obj,
-                                       confounders_sampling_name=confounders_sampling_name)
+                                       selection_predictors=selection_predictors)
   source.rep.obj$EstimateRep(stratification = stratification,
                              stratification_joint = stratification_joint)
   target.obj$estimates$CATE <- target.obj$get_CATE(stratification, stratification_joint)

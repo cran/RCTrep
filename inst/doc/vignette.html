@@ -120,13 +120,20 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   for (var i = 0; i < sheets.length; i++) {
     if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
     try { var rules = sheets[i].cssRules; } catch (e) { continue; }
-    for (var j = 0; j < rules.length; j++) {
+    var j = 0;
+    while (j < rules.length) {
       var rule = rules[j];
       // check if there is a div.sourceCode rule
-      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
       var style = rule.style.cssText;
       // check if color or background-color is set
-      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
       // replace div.sourceCode by a pre.sourceCode rule
       sheets[i].deleteRule(j);
       sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
@@ -364,11 +371,11 @@ modifiers Xs which are predictive of the selection probability.</li>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>                 <span class="at">outcome_method =</span> <span class="st">&quot;BART&quot;</span>,</span>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>                 <span class="at">source.data =</span> RCTrep<span class="sc">::</span>source.data,</span>
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>                 <span class="at">target.data =</span> RCTrep<span class="sc">::</span>target.data,</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>                 <span class="at">vars_name =</span> <span class="fu">list</span>(<span class="at">confounders_treatment_name =</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>                 <span class="at">vars_name =</span> <span class="fu">list</span>(<span class="at">outcome_predictors =</span></span>
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>                                    <span class="fu">c</span>(<span class="st">&quot;x1&quot;</span>,<span class="st">&quot;x2&quot;</span>,<span class="st">&quot;x3&quot;</span>,<span class="st">&quot;x4&quot;</span>,<span class="st">&quot;x5&quot;</span>,<span class="st">&quot;x6&quot;</span>),</span>
 <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">treatment_name =</span> <span class="fu">c</span>(<span class="st">&#39;z&#39;</span>),</span>
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">outcome_name =</span> <span class="fu">c</span>(<span class="st">&#39;y&#39;</span>)),</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>                 <span class="at">confounders_sampling_name =</span> <span class="fu">c</span>(<span class="st">&quot;x2&quot;</span>,<span class="st">&quot;x6&quot;</span>),</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>                 <span class="at">selection_predictors =</span> <span class="fu">c</span>(<span class="st">&quot;x2&quot;</span>,<span class="st">&quot;x6&quot;</span>),</span>
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>                 <span class="at">stratification =</span> <span class="fu">c</span>(<span class="st">&quot;x1&quot;</span>,<span class="st">&quot;x3&quot;</span>,<span class="st">&quot;x4&quot;</span>,<span class="st">&quot;x5&quot;</span>),</span>
 <span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>                 <span class="at">stratification_joint =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
@@ -383,7 +390,7 @@ adjust the sampling mechanism. We use Bayesian additive regression trees
 (BART) to model the outcome. We select x1,x2,x3,x4,x5,x6 as X and x2,x6
 as Xs. In this example, since x2,x6 are the only effect modifiers that
 are predictive of the selection probability, they are the minimal set of
-confounders_sampling_name that allows for the validation.</p>
+selection_predictors that allows for the validation.</p>
 </div>
 <div id="basic-usage" class="section level1">
 <h1>Basic usage</h1>
@@ -392,19 +399,18 @@ confounders_sampling_name that allows for the validation.</p>
 <p>In the set-selection step, we identify two covariates sets from all
 pre-treatment outcome predictors:</p>
 <ol style="list-style-type: decimal">
-<li>X confounders_treatment_name, a set of covariates used to adjust the
+<li>X outcome_predictors, a set of covariates used to adjust the
 treatment allocation mechanism;</li>
-<li>Xs confounders_sampling_name, a set of covariates to adjust the
-sampling mechanism. By default, confounders_treatment_name and
-confounders_sampling_name are the same. To reduce the variance of the
-weighted (C)ATEs, we assign a set of effect modifiers that are
-predictive of the selection probability to
-confounders_sampling_name.</li>
+<li>Xs selection_predictors, a set of covariates to adjust the sampling
+mechanism. By default, outcome_predictors and selection_predictors are
+the same. To reduce the variance of the weighted (C)ATEs, we assign a
+set of effect modifiers that are predictive of the selection probability
+to selection_predictors.</li>
 </ol>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>source.data <span class="ot">&lt;-</span> RCTrep<span class="sc">::</span>source.data</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>target.data <span class="ot">&lt;-</span> RCTrep<span class="sc">::</span>target.data</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>vars_name <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">confounders_treatment_name =</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>vars_name <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">outcome_predictors =</span></span>
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">c</span>(<span class="st">&quot;x1&quot;</span>,<span class="st">&quot;x2&quot;</span>,<span class="st">&quot;x3&quot;</span>,<span class="st">&quot;x4&quot;</span>,<span class="st">&quot;x5&quot;</span>,<span class="st">&quot;x6&quot;</span>),</span>
 <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>                  <span class="at">treatment_name =</span> <span class="fu">c</span>(<span class="st">&#39;z&#39;</span>),</span>
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>                  <span class="at">outcome_name =</span> <span class="fu">c</span>(<span class="st">&#39;y&#39;</span>)</span>
@@ -457,16 +463,16 @@ variables of characteristics, treatment, and outcome of each
 individual.</li>
 <li>name: a character indicating the object name;</li>
 <li>vars_name: a list containing three vectors with the first element
-confounders_treatment_name indicating confounding variable names, the
-second element treatment_name indicating a treatment variable name, and
-the third element outcome_name indicating an outcome variable name;</li>
+outcome_predictors indicating confounding variable names, the second
+element treatment_name indicating a treatment variable name, and the
+third element outcome_name indicating an outcome variable name;</li>
 </ol>
 <div id="step-2.2-estimation-of-the-weighted-cates" class="section level3">
 <h3>Step 2.2: Estimation of the weighted (C)ATEs</h3>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>source.obj.rep <span class="ot">&lt;-</span> <span class="fu">SEstimator_wrapper</span>(<span class="at">Estimator =</span> <span class="st">&quot;Exact&quot;</span>,</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">target.obj =</span> target.obj,</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">source.obj =</span> source.obj,</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">confounders_sampling_name =</span> <span class="fu">c</span>(<span class="st">&quot;x2&quot;</span>,<span class="st">&quot;x6&quot;</span>))</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">selection_predictors =</span> <span class="fu">c</span>(<span class="st">&quot;x2&quot;</span>,<span class="st">&quot;x6&quot;</span>))</span>
 <span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>source.obj.rep<span class="sc">$</span><span class="fu">EstimateRep</span>(<span class="at">stratification =</span> <span class="fu">c</span>(<span class="st">&quot;x1&quot;</span>,<span class="st">&quot;x3&quot;</span>,<span class="st">&quot;x4&quot;</span>,<span class="st">&quot;x5&quot;</span>))</span></code></pre></div>
 <p>The arguments list for the function SEstimator_wrapper is:</p>
 <ol style="list-style-type: decimal">
@@ -478,7 +484,7 @@ the data is regarded as a simple random sample of the target population
 Pθ and the estimates of CATEs are regarded as the unbiased estimates of
 the truth; source.obj indicates an object of which the estimates of the
 CATEs are to validate.</li>
-<li>confounders_sampling_name: a character vector of names of Xs; the
+<li>selection_predictors: a character vector of names of Xs; the
 weighted Xs in source.obj should be approximately equally distributed to
 Xs in target.obj.</li>
 </ol>
@@ -494,7 +500,7 @@ specified:</p>
 EstimateRep() estimates the weighted ATE of subsets using Sobs in
 source.obj. The subsets are selected according to covariates in
 stratifica tion in combination or individually; default value of
-stratification is confounders_sampling_name;</li>
+stratification is selection_predictors;</li>
 <li>stratification_joint: a logical value, if TRUE, then subsets are
 selected in combination of all covariates in stratification; otherwise,
 then subsets are selected by covariates in stratification
@@ -548,7 +554,7 @@ be launched by calling the function:</p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>source.data <span class="ot">&lt;-</span> RCTrep<span class="sc">::</span>source.data</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>target.data <span class="ot">&lt;-</span> RCTrep<span class="sc">::</span>target.data</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>vars_name <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">confounders_treatment_name =</span> <span class="fu">c</span>(<span class="st">&quot;x1&quot;</span>,<span class="st">&quot;x2&quot;</span>,<span class="st">&quot;x3&quot;</span>,<span class="st">&quot;x4&quot;</span>,<span class="st">&quot;x5&quot;</span>,<span class="st">&quot;x6&quot;</span>),</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>vars_name <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">outcome_predictors =</span> <span class="fu">c</span>(<span class="st">&quot;x1&quot;</span>,<span class="st">&quot;x2&quot;</span>,<span class="st">&quot;x3&quot;</span>,<span class="st">&quot;x4&quot;</span>,<span class="st">&quot;x5&quot;</span>,<span class="st">&quot;x6&quot;</span>),</span>
 <span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>                  <span class="at">treatment_name =</span> <span class="fu">c</span>(<span class="st">&#39;z&#39;</span>),</span>
 <span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>                  <span class="at">outcome_name =</span> <span class="fu">c</span>(<span class="st">&#39;y&#39;</span>)</span>
 <span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>)</span>
@@ -595,21 +601,21 @@ be launched by calling the function:</p>
 <span id="cb9-48"><a href="#cb9-48" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb9-49"><a href="#cb9-49" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-50"><a href="#cb9-50" aria-hidden="true" tabindex="-1"></a>strata <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;x1&quot;</span>,<span class="st">&quot;x4&quot;</span>)</span>
-<span id="cb9-51"><a href="#cb9-51" aria-hidden="true" tabindex="-1"></a>confounders_sampling_name <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;x2&quot;</span>,<span class="st">&quot;x6&quot;</span>)</span>
+<span id="cb9-51"><a href="#cb9-51" aria-hidden="true" tabindex="-1"></a>selection_predictors <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;x2&quot;</span>,<span class="st">&quot;x6&quot;</span>)</span>
 <span id="cb9-52"><a href="#cb9-52" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-53"><a href="#cb9-53" aria-hidden="true" tabindex="-1"></a>source.gc.exact <span class="ot">&lt;-</span> <span class="fu">SEstimator_wrapper</span>(<span class="at">Estimator =</span> <span class="st">&quot;Exact&quot;</span>,</span>
 <span id="cb9-54"><a href="#cb9-54" aria-hidden="true" tabindex="-1"></a>                                      <span class="at">target.obj =</span> target.obj,</span>
 <span id="cb9-55"><a href="#cb9-55" aria-hidden="true" tabindex="-1"></a>                                      <span class="at">source.obj =</span> source.obj.gc,</span>
-<span id="cb9-56"><a href="#cb9-56" aria-hidden="true" tabindex="-1"></a>                                      <span class="at">confounders_sampling_name =</span></span>
-<span id="cb9-57"><a href="#cb9-57" aria-hidden="true" tabindex="-1"></a>                                        confounders_sampling_name)</span>
+<span id="cb9-56"><a href="#cb9-56" aria-hidden="true" tabindex="-1"></a>                                      <span class="at">selection_predictors =</span></span>
+<span id="cb9-57"><a href="#cb9-57" aria-hidden="true" tabindex="-1"></a>                                        selection_predictors)</span>
 <span id="cb9-58"><a href="#cb9-58" aria-hidden="true" tabindex="-1"></a>source.gc.exact<span class="sc">$</span><span class="fu">EstimateRep</span>(<span class="at">stratification =</span> strata,</span>
 <span id="cb9-59"><a href="#cb9-59" aria-hidden="true" tabindex="-1"></a>                            <span class="at">stratification_joint =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb9-60"><a href="#cb9-60" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-61"><a href="#cb9-61" aria-hidden="true" tabindex="-1"></a>source.gc.isw <span class="ot">&lt;-</span> <span class="fu">SEstimator_wrapper</span>(<span class="at">Estimator =</span> <span class="st">&quot;ISW&quot;</span>,</span>
 <span id="cb9-62"><a href="#cb9-62" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">target.obj =</span> target.obj,</span>
 <span id="cb9-63"><a href="#cb9-63" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">source.obj =</span> source.obj.gc,</span>
-<span id="cb9-64"><a href="#cb9-64" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">confounders_sampling_name =</span></span>
-<span id="cb9-65"><a href="#cb9-65" aria-hidden="true" tabindex="-1"></a>                                      confounders_sampling_name,</span>
+<span id="cb9-64"><a href="#cb9-64" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">selection_predictors =</span></span>
+<span id="cb9-65"><a href="#cb9-65" aria-hidden="true" tabindex="-1"></a>                                      selection_predictors,</span>
 <span id="cb9-66"><a href="#cb9-66" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">method =</span> <span class="st">&quot;glm&quot;</span>)</span>
 <span id="cb9-67"><a href="#cb9-67" aria-hidden="true" tabindex="-1"></a>source.gc.isw<span class="sc">$</span><span class="fu">EstimateRep</span>(<span class="at">stratification =</span> strata,</span>
 <span id="cb9-68"><a href="#cb9-68" aria-hidden="true" tabindex="-1"></a>                          <span class="at">stratification_joint =</span> <span class="cn">TRUE</span>)</span>
@@ -617,24 +623,24 @@ be launched by calling the function:</p>
 <span id="cb9-70"><a href="#cb9-70" aria-hidden="true" tabindex="-1"></a>source.gc.subclass <span class="ot">&lt;-</span> <span class="fu">SEstimator_wrapper</span>(<span class="at">Estimator =</span> <span class="st">&quot;Subclass&quot;</span>,</span>
 <span id="cb9-71"><a href="#cb9-71" aria-hidden="true" tabindex="-1"></a>                                         <span class="at">target.obj =</span> target.obj,</span>
 <span id="cb9-72"><a href="#cb9-72" aria-hidden="true" tabindex="-1"></a>                                         <span class="at">source.obj =</span> source.obj.gc,</span>
-<span id="cb9-73"><a href="#cb9-73" aria-hidden="true" tabindex="-1"></a>                                         <span class="at">confounders_sampling_name =</span></span>
-<span id="cb9-74"><a href="#cb9-74" aria-hidden="true" tabindex="-1"></a>                                           confounders_sampling_name)</span>
+<span id="cb9-73"><a href="#cb9-73" aria-hidden="true" tabindex="-1"></a>                                         <span class="at">selection_predictors =</span></span>
+<span id="cb9-74"><a href="#cb9-74" aria-hidden="true" tabindex="-1"></a>                                           selection_predictors)</span>
 <span id="cb9-75"><a href="#cb9-75" aria-hidden="true" tabindex="-1"></a>source.gc.subclass<span class="sc">$</span><span class="fu">EstimateRep</span>(<span class="at">stratification =</span> strata,</span>
 <span id="cb9-76"><a href="#cb9-76" aria-hidden="true" tabindex="-1"></a>                               <span class="at">stratification_joint =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb9-77"><a href="#cb9-77" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-78"><a href="#cb9-78" aria-hidden="true" tabindex="-1"></a>source.ipw.exact <span class="ot">&lt;-</span> <span class="fu">SEstimator_wrapper</span>(<span class="at">Estimator =</span> <span class="st">&quot;Exact&quot;</span>,</span>
 <span id="cb9-79"><a href="#cb9-79" aria-hidden="true" tabindex="-1"></a>                                       <span class="at">target.obj =</span> target.obj,</span>
 <span id="cb9-80"><a href="#cb9-80" aria-hidden="true" tabindex="-1"></a>                                       <span class="at">source.obj =</span> source.obj.ipw,</span>
-<span id="cb9-81"><a href="#cb9-81" aria-hidden="true" tabindex="-1"></a>                                       <span class="at">confounders_sampling_name =</span></span>
-<span id="cb9-82"><a href="#cb9-82" aria-hidden="true" tabindex="-1"></a>                                         confounders_sampling_name)</span>
+<span id="cb9-81"><a href="#cb9-81" aria-hidden="true" tabindex="-1"></a>                                       <span class="at">selection_predictors =</span></span>
+<span id="cb9-82"><a href="#cb9-82" aria-hidden="true" tabindex="-1"></a>                                         selection_predictors)</span>
 <span id="cb9-83"><a href="#cb9-83" aria-hidden="true" tabindex="-1"></a>source.ipw.exact<span class="sc">$</span><span class="fu">EstimateRep</span>(<span class="at">stratification =</span> strata,</span>
 <span id="cb9-84"><a href="#cb9-84" aria-hidden="true" tabindex="-1"></a>                             <span class="at">stratification_joint =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb9-85"><a href="#cb9-85" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-86"><a href="#cb9-86" aria-hidden="true" tabindex="-1"></a>source.ipw.isw <span class="ot">&lt;-</span> <span class="fu">SEstimator_wrapper</span>(<span class="at">Estimator =</span> <span class="st">&quot;ISW&quot;</span>,</span>
 <span id="cb9-87"><a href="#cb9-87" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">target.obj =</span> target.obj,</span>
 <span id="cb9-88"><a href="#cb9-88" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">source.obj =</span> source.obj.ipw,</span>
-<span id="cb9-89"><a href="#cb9-89" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">confounders_sampling_name =</span></span>
-<span id="cb9-90"><a href="#cb9-90" aria-hidden="true" tabindex="-1"></a>                                       confounders_sampling_name,</span>
+<span id="cb9-89"><a href="#cb9-89" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">selection_predictors =</span></span>
+<span id="cb9-90"><a href="#cb9-90" aria-hidden="true" tabindex="-1"></a>                                       selection_predictors,</span>
 <span id="cb9-91"><a href="#cb9-91" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">method =</span> <span class="st">&quot;glm&quot;</span>)</span>
 <span id="cb9-92"><a href="#cb9-92" aria-hidden="true" tabindex="-1"></a>source.ipw.isw<span class="sc">$</span><span class="fu">EstimateRep</span>(<span class="at">stratification =</span> strata,</span>
 <span id="cb9-93"><a href="#cb9-93" aria-hidden="true" tabindex="-1"></a>                           <span class="at">stratification_joint =</span> <span class="cn">TRUE</span>)</span>
@@ -642,24 +648,24 @@ be launched by calling the function:</p>
 <span id="cb9-95"><a href="#cb9-95" aria-hidden="true" tabindex="-1"></a>source.ipw.subclass <span class="ot">&lt;-</span> <span class="fu">SEstimator_wrapper</span>(<span class="at">Estimator =</span> <span class="st">&quot;Subclass&quot;</span>,</span>
 <span id="cb9-96"><a href="#cb9-96" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">target.obj =</span> target.obj,</span>
 <span id="cb9-97"><a href="#cb9-97" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">source.obj =</span> source.obj.ipw,</span>
-<span id="cb9-98"><a href="#cb9-98" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">confounders_sampling_name =</span></span>
-<span id="cb9-99"><a href="#cb9-99" aria-hidden="true" tabindex="-1"></a>                                            confounders_sampling_name)</span>
+<span id="cb9-98"><a href="#cb9-98" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">selection_predictors =</span></span>
+<span id="cb9-99"><a href="#cb9-99" aria-hidden="true" tabindex="-1"></a>                                            selection_predictors)</span>
 <span id="cb9-100"><a href="#cb9-100" aria-hidden="true" tabindex="-1"></a>source.ipw.subclass<span class="sc">$</span><span class="fu">EstimateRep</span>(<span class="at">stratification =</span> strata,</span>
 <span id="cb9-101"><a href="#cb9-101" aria-hidden="true" tabindex="-1"></a>                                <span class="at">stratification_joint =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb9-102"><a href="#cb9-102" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-103"><a href="#cb9-103" aria-hidden="true" tabindex="-1"></a>source.dr.exact <span class="ot">&lt;-</span> <span class="fu">SEstimator_wrapper</span>(<span class="at">Estimator =</span> <span class="st">&quot;Exact&quot;</span>,</span>
 <span id="cb9-104"><a href="#cb9-104" aria-hidden="true" tabindex="-1"></a>                                      <span class="at">target.obj =</span> target.obj,</span>
 <span id="cb9-105"><a href="#cb9-105" aria-hidden="true" tabindex="-1"></a>                                      <span class="at">source.obj =</span> source.obj.dr,</span>
-<span id="cb9-106"><a href="#cb9-106" aria-hidden="true" tabindex="-1"></a>                                      <span class="at">confounders_sampling_name =</span></span>
-<span id="cb9-107"><a href="#cb9-107" aria-hidden="true" tabindex="-1"></a>                                        confounders_sampling_name)</span>
+<span id="cb9-106"><a href="#cb9-106" aria-hidden="true" tabindex="-1"></a>                                      <span class="at">selection_predictors =</span></span>
+<span id="cb9-107"><a href="#cb9-107" aria-hidden="true" tabindex="-1"></a>                                        selection_predictors)</span>
 <span id="cb9-108"><a href="#cb9-108" aria-hidden="true" tabindex="-1"></a>source.dr.exact<span class="sc">$</span><span class="fu">EstimateRep</span>(<span class="at">stratification =</span> strata,</span>
 <span id="cb9-109"><a href="#cb9-109" aria-hidden="true" tabindex="-1"></a>                            <span class="at">stratification_joint =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb9-110"><a href="#cb9-110" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-111"><a href="#cb9-111" aria-hidden="true" tabindex="-1"></a>source.dr.isw <span class="ot">&lt;-</span> <span class="fu">SEstimator_wrapper</span>(<span class="at">Estimator =</span> <span class="st">&quot;ISW&quot;</span>,</span>
 <span id="cb9-112"><a href="#cb9-112" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">target.obj =</span> target.obj,</span>
 <span id="cb9-113"><a href="#cb9-113" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">source.obj =</span> source.obj.dr,</span>
-<span id="cb9-114"><a href="#cb9-114" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">confounders_sampling_name =</span></span>
-<span id="cb9-115"><a href="#cb9-115" aria-hidden="true" tabindex="-1"></a>                                      confounders_sampling_name,</span>
+<span id="cb9-114"><a href="#cb9-114" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">selection_predictors =</span></span>
+<span id="cb9-115"><a href="#cb9-115" aria-hidden="true" tabindex="-1"></a>                                      selection_predictors,</span>
 <span id="cb9-116"><a href="#cb9-116" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">method =</span> <span class="st">&quot;glm&quot;</span>)</span>
 <span id="cb9-117"><a href="#cb9-117" aria-hidden="true" tabindex="-1"></a>source.dr.isw<span class="sc">$</span><span class="fu">EstimateRep</span>(<span class="at">stratification =</span> strata,</span>
 <span id="cb9-118"><a href="#cb9-118" aria-hidden="true" tabindex="-1"></a>                          <span class="at">stratification_joint =</span> <span class="cn">TRUE</span>)</span>
@@ -667,8 +673,8 @@ be launched by calling the function:</p>
 <span id="cb9-120"><a href="#cb9-120" aria-hidden="true" tabindex="-1"></a>source.dr.subclass <span class="ot">&lt;-</span> <span class="fu">SEstimator_wrapper</span>(<span class="at">Estimator =</span> <span class="st">&quot;Subclass&quot;</span>,</span>
 <span id="cb9-121"><a href="#cb9-121" aria-hidden="true" tabindex="-1"></a>                                         <span class="at">target.obj =</span> target.obj,</span>
 <span id="cb9-122"><a href="#cb9-122" aria-hidden="true" tabindex="-1"></a>                                         <span class="at">source.obj =</span> source.obj.dr,</span>
-<span id="cb9-123"><a href="#cb9-123" aria-hidden="true" tabindex="-1"></a>                                         <span class="at">confounders_sampling_name =</span></span>
-<span id="cb9-124"><a href="#cb9-124" aria-hidden="true" tabindex="-1"></a>                                           confounders_sampling_name)</span>
+<span id="cb9-123"><a href="#cb9-123" aria-hidden="true" tabindex="-1"></a>                                         <span class="at">selection_predictors =</span></span>
+<span id="cb9-124"><a href="#cb9-124" aria-hidden="true" tabindex="-1"></a>                                           selection_predictors)</span>
 <span id="cb9-125"><a href="#cb9-125" aria-hidden="true" tabindex="-1"></a>source.dr.subclass<span class="sc">$</span><span class="fu">EstimateRep</span>(<span class="at">stratification =</span> strata,</span>
 <span id="cb9-126"><a href="#cb9-126" aria-hidden="true" tabindex="-1"></a>                               <span class="at">stratification_joint =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb9-127"><a href="#cb9-127" aria-hidden="true" tabindex="-1"></a></span>
@@ -692,11 +698,11 @@ be launched by calling the function:</p>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>target.data <span class="ot">&lt;-</span> RCTrep<span class="sc">::</span>target.data</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Identification</span></span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>vars_name <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">confounders_treatment_name =</span> <span class="fu">c</span>(<span class="st">&quot;x1&quot;</span>,<span class="st">&quot;x2&quot;</span>,<span class="st">&quot;x3&quot;</span>,<span class="st">&quot;x4&quot;</span>,<span class="st">&quot;x5&quot;</span>,<span class="st">&quot;x6&quot;</span>),</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>vars_name <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">outcome_predictors =</span> <span class="fu">c</span>(<span class="st">&quot;x1&quot;</span>,<span class="st">&quot;x2&quot;</span>,<span class="st">&quot;x3&quot;</span>,<span class="st">&quot;x4&quot;</span>,<span class="st">&quot;x5&quot;</span>,<span class="st">&quot;x6&quot;</span>),</span>
 <span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>                  <span class="at">treatment_name =</span> <span class="fu">c</span>(<span class="st">&#39;z&#39;</span>),</span>
 <span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>                  <span class="at">outcome_name =</span> <span class="fu">c</span>(<span class="st">&#39;y&#39;</span>)</span>
 <span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>confounders_sampling_name <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;x2&quot;</span>,<span class="st">&quot;x6&quot;</span>)</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>selection_predictors <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;x2&quot;</span>,<span class="st">&quot;x6&quot;</span>)</span>
 <span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Estimate conditional average treatment effect</span></span>
 <span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>source.obj <span class="ot">&lt;-</span> <span class="fu">TEstimator_wrapper</span>(</span>
@@ -725,8 +731,8 @@ be launched by calling the function:</p>
 <span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a>source.rep.obj <span class="ot">&lt;-</span> <span class="fu">SEstimator_wrapper</span>(<span class="at">Estimator =</span> <span class="st">&quot;Exact&quot;</span>,</span>
 <span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">target.obj =</span> target.obj,</span>
 <span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">source.obj =</span> source.obj,</span>
-<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">confounders_sampling_name =</span></span>
-<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a>                                       confounders_sampling_name)</span>
+<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">selection_predictors =</span></span>
+<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a>                                       selection_predictors)</span>
 <span id="cb10-40"><a href="#cb10-40" aria-hidden="true" tabindex="-1"></a>source.rep.obj<span class="sc">$</span><span class="fu">EstimateRep</span>(<span class="at">stratification =</span> strata, <span class="at">stratification_joint =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb10-41"><a href="#cb10-41" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb10-42"><a href="#cb10-42" aria-hidden="true" tabindex="-1"></a><span class="co"># Validate</span></span>
@@ -759,7 +765,7 @@ validation:</p>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>target.data <span class="ot">&lt;-</span> RCTrep<span class="sc">::</span>target.data</span>
 <span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Identification</span></span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>vars_name <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">confounders_treatment_name =</span> <span class="fu">c</span>(<span class="st">&quot;x1&quot;</span>,<span class="st">&quot;x2&quot;</span>,<span class="st">&quot;x3&quot;</span>,<span class="st">&quot;x4&quot;</span>,<span class="st">&quot;x5&quot;</span>,<span class="st">&quot;x6&quot;</span>),</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>vars_name <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">outcome_predictors =</span> <span class="fu">c</span>(<span class="st">&quot;x1&quot;</span>,<span class="st">&quot;x2&quot;</span>,<span class="st">&quot;x3&quot;</span>,<span class="st">&quot;x4&quot;</span>,<span class="st">&quot;x5&quot;</span>,<span class="st">&quot;x6&quot;</span>),</span>
 <span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>                  <span class="at">treatment_name =</span> <span class="fu">c</span>(<span class="st">&#39;z&#39;</span>),</span>
 <span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>                  <span class="at">outcome_name =</span> <span class="fu">c</span>(<span class="st">&#39;y&#39;</span>)</span>
 <span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>)</span>
@@ -803,9 +809,9 @@ accordingly:</p>
 <p>Then we instantiate target.obj of class TEstimator_Synthetic. We
 initialize the public field data by assigning synthetic.data to df;
 initialize the public field estimates by assigning RCT.estimates to
-estimates; initialize the public field confounders_treatment_name by
-assigning c(“x1”,“x2”,“x3”,“x4”,“x5”,“x6”) to vars_name. Note that
-synthetic.data might slightly shift from the true target population.</p>
+estimates; initialize the public field outcome_predictors by assigning
+c(“x1”,“x2”,“x3”,“x4”,“x5”,“x6”) to vars_name. Note that synthetic.data
+might slightly shift from the true target population.</p>
 <div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>synthetic.data <span class="ot">&lt;-</span> <span class="fu">semi_join</span>(synthetic.data, source.data, <span class="at">by =</span> vars_rct)</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>target.obj <span class="ot">&lt;-</span> TEstimator_Synthetic<span class="sc">$</span><span class="fu">new</span>(<span class="at">data =</span> synthetic.data,</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>                                       <span class="at">estimates=</span>RCT.estimates,</span>
@@ -830,7 +836,7 @@ synthetic.data might slightly shift from the true target population.</p>
 <span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>source.rep.obj <span class="ot">&lt;-</span> <span class="fu">SEstimator_wrapper</span>(<span class="at">Estimator=</span><span class="st">&quot;Exact&quot;</span>,</span>
 <span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">target.obj=</span>target.obj,</span>
 <span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">source.obj=</span>source.obj,</span>
-<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">confounders_sampling_name=</span><span class="fu">c</span>(<span class="st">&quot;x2&quot;</span>,<span class="st">&quot;x6&quot;</span>))</span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">selection_predictors=</span><span class="fu">c</span>(<span class="st">&quot;x2&quot;</span>,<span class="st">&quot;x6&quot;</span>))</span>
 <span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>source.rep.obj<span class="sc">$</span><span class="fu">EstimateRep</span>(<span class="at">stratification =</span> vars_rct,</span>
 <span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>                           <span class="at">stratification_joint =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a></span>

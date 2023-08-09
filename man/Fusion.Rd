@@ -13,14 +13,14 @@ Validation of estimates of conditional average treatment effects in objects of c
 }
 \examples{
 \donttest{
-source.data <- RCTrep::source.data[sample(dim(RCTrep::source.data)[1],500),]
-target.data <- RCTrep::target.data[sample(dim(RCTrep::target.data)[1],500),]
+source.data <- RCTrep::source.data
+target.data <- RCTrep::target.data
 
-vars_name <- list(confounders_treatment_name = c("x1","x2","x3","x4","x5","x6"),
+vars_name <- list(outcome_predictors = c("x1","x2","x3","x4","x5","x6"),
                   treatment_name = c('z'),
                   outcome_name = c('y')
 )
-confounders_sampling_name <- c("x2","x6")
+selection_predictors <- c("x2","x6")
 
 source.obj <- TEstimator_wrapper(
  Estimator = "G_computation",
@@ -45,8 +45,8 @@ strata <- c("x1","x4")
 source.rep.obj <- SEstimator_wrapper(Estimator = "Exact",
                                      target.obj = target.obj,
                                      source.obj = source.obj,
-                                     confounders_sampling_name =
-                                     confounders_sampling_name)
+                                     selection_predictors =
+                                     selection_predictors)
 source.rep.obj$EstimateRep(stratification = strata, stratification_joint = TRUE)
 
 fusion <- Fusion$new(target.obj,
@@ -60,16 +60,16 @@ fusion$evaluate()
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-new}{\code{Fusion$new()}}
-\item \href{#method-plot}{\code{Fusion$plot()}}
-\item \href{#method-print}{\code{Fusion$print()}}
-\item \href{#method-evaluate}{\code{Fusion$evaluate()}}
-\item \href{#method-clone}{\code{Fusion$clone()}}
+\item \href{#method-Fusion-new}{\code{Fusion$new()}}
+\item \href{#method-Fusion-plot}{\code{Fusion$plot()}}
+\item \href{#method-Fusion-print}{\code{Fusion$print()}}
+\item \href{#method-Fusion-evaluate}{\code{Fusion$evaluate()}}
+\item \href{#method-Fusion-clone}{\code{Fusion$clone()}}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-new"></a>}}
-\if{latex}{\out{\hypertarget{method-new}{}}}
+\if{html}{\out{<a id="method-Fusion-new"></a>}}
+\if{latex}{\out{\hypertarget{method-Fusion-new}{}}}
 \subsection{Method \code{new()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Fusion$new(..., stratification = NULL, stratification_joint = NULL)}\if{html}{\out{</div>}}
@@ -88,8 +88,8 @@ fusion$evaluate()
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-plot"></a>}}
-\if{latex}{\out{\hypertarget{method-plot}{}}}
+\if{html}{\out{<a id="method-Fusion-plot"></a>}}
+\if{latex}{\out{\hypertarget{method-Fusion-plot}{}}}
 \subsection{Method \code{plot()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Fusion$plot()}\if{html}{\out{</div>}}
@@ -97,8 +97,8 @@ fusion$evaluate()
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-print"></a>}}
-\if{latex}{\out{\hypertarget{method-print}{}}}
+\if{html}{\out{<a id="method-Fusion-print"></a>}}
+\if{latex}{\out{\hypertarget{method-Fusion-print}{}}}
 \subsection{Method \code{print()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Fusion$print()}\if{html}{\out{</div>}}
@@ -106,8 +106,8 @@ fusion$evaluate()
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-evaluate"></a>}}
-\if{latex}{\out{\hypertarget{method-evaluate}{}}}
+\if{html}{\out{<a id="method-Fusion-evaluate"></a>}}
+\if{latex}{\out{\hypertarget{method-Fusion-evaluate}{}}}
 \subsection{Method \code{evaluate()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Fusion$evaluate()}\if{html}{\out{</div>}}
@@ -115,8 +115,8 @@ fusion$evaluate()
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-clone"></a>}}
-\if{latex}{\out{\hypertarget{method-clone}{}}}
+\if{html}{\out{<a id="method-Fusion-clone"></a>}}
+\if{latex}{\out{\hypertarget{method-Fusion-clone}{}}}
 \subsection{Method \code{clone()}}{
 The objects of this class are cloneable with this method.
 \subsection{Usage}{

@@ -25,7 +25,7 @@ TEstimator_wrapper(
 
 \item{data}{A data frame containing variables named in \code{vars_name} and possible other variables.}
 
-\item{vars_name}{A list containing four character vectors \code{confounders_treatment_name}, \code{treatment_name}, and \code{outcome_name}. \code{confounders_treatment_name} is a character vector containing the adjustment variables, which, along with \code{TEstimator} and the corresponding \code{outcome_method} or \code{treatment_method} to correct for confounding; \code{outcome_name} is a character vector of length one containing the name of outcome; \code{treatment_name} is a character vector of length one containing the name of treatment.}
+\item{vars_name}{A list containing four character vectors \code{outcome_predictors}, \code{treatment_name}, and \code{outcome_name}. \code{outcome_predictors} is a character vector containing the adjustment variables, which, along with \code{TEstimator} and the corresponding \code{outcome_method} or \code{treatment_method} to correct for confounding; \code{outcome_name} is a character vector of length one containing the name of outcome; \code{treatment_name} is a character vector of length one containing the name of treatment.}
 
 \item{name}{A character indicating the name of the output object}
 
@@ -56,7 +56,7 @@ Estimating conditional average treatment effects
 \examples{
 \donttest{
 data <- RCTrep::source.data[sample(dim(RCTrep::source.data)[1],500),]
-vars_name <- list(confounders_treatment_name = c("x1","x2","x3","x4","x5","x6"),
+vars_name <- list(outcome_predictors = c("x1","x2","x3","x4","x5","x6"),
                   treatment_name = c('z'),
                   outcome_name = c('y'))
 

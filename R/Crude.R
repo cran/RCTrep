@@ -9,13 +9,13 @@ Crude <- R6::R6Class(
       #browser()
       super$initialize(df, vars_name, name)
       private$set_ATE()
-      private$set_CATE(private$confounders_treatment_name,TRUE)
+      private$set_CATE(private$outcome_predictors,TRUE)
       private$isTrial <- isTrial
     },
 
     diagnosis_t_ignorability = function(stratification, stratification_joint=TRUE){
       if(missing(stratification)){
-        stratification <- private$confounders_treatment_name
+        stratification <- private$outcome_predictors
       }
 
       plot.cate <- self$plot_CATE(stratification)

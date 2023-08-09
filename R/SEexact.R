@@ -1,3 +1,4 @@
+#' @import MatchIt
 SEexact <- R6::R6Class(
   "SEexact",
   inherit = SEstimator,
@@ -6,8 +7,8 @@ SEexact <- R6::R6Class(
 
     initialize = function(target.obj, source.obj,
                           weighting_method=NULL,
-                          confounders_sampling_name){
-      super$initialize(target.obj, source.obj, weighting_method,confounders_sampling_name)
+                          selection_predictors){
+      super$initialize(target.obj, source.obj, weighting_method,selection_predictors)
       #browser()
     }
   ),

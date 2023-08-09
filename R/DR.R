@@ -1,4 +1,6 @@
 #' @importfrom PSweight PSweight
+#' @import BART
+#' @import caret
 DR <- R6::R6Class(
   "DR",
   inherit = TEstimator,
@@ -21,7 +23,7 @@ DR <- R6::R6Class(
       private$outcome_method <- outcome_method
       private$outcome_formula <- outcome_formula
       private$confounders_treatment_factor <-
-        private$confounders_treatment_name[sapply(self$data[,private$confounders_treatment_name],is.factor)]
+        private$outcome_predictors[sapply(self$data[,private$outcome_predictors],is.factor)]
 
       if(outcome_method == "BART"){
         self$model$outcome <- private$fit_outcome_BART(two_models, ...)
@@ -54,7 +56,7 @@ DR <- R6::R6Class(
       # self$ps.est <- private$est_ps()
       # self$po.est <- private$est_potentialOutcomes(two_models)
       private$set_ATE()
-      private$set_CATE(private$confounders_treatment_name,TRUE)
+      private$set_CATE(private$outcome_predictors,TRUE)
       private$isTrial <- isTrial
       self$id <- paste(self$id, paste(private$treatment_method,private$outcome_method, sep = "_"), sep = "/")
     }
@@ -139,7 +141,7 @@ DR <- R6::R6Class(
       #browser()
       if (is.null(private$treatment_formula)) {
         model <- caret::train(
-          x = self$data[, private$confounders_treatment_name],
+          x = self$data[, private$outcome_predictors],
           y = self$data[, private$treatment_name],
           method = private$treatment_method,
           ...
@@ -156,7 +158,7 @@ DR <- R6::R6Class(
     },
 
     fit_treatment_BART = function(...) {
-      x.train <- self$data[, c(private$confounders_treatment_name)]
+      x.train <- self$data[, c(private$outcome_predictors)]
       if(length(private$confounders_treatment_factor)>0){
         x.train <- fastDummies::dummy_cols(x.train, select_columns= private$confounders_treatment_factor,
                                            remove_selected_columns = TRUE)
@@ -188,13 +190,13 @@ DR <- R6::R6Class(
         train.t1.id <- (self$data[, private$treatment_name] == t1)
         if (is.null(private$outcome_formula)) {
           model.y1 <- caret::train(
-            x = self$data[train.t1.id, private$confounders_treatment_name],
+            x = self$data[train.t1.id, private$outcome_predictors],
             y = self$data[train.t1.id, private$outcome_name],
             method = private$outcome_method,
             ...
           )
           model.y0 <- caret::train(
-            x = self$data[train.t0.id, private$confounders_treatment_name],
+            x = self$data[train.t0.id, private$outcome_predictors],
             y = self$data[train.t0.id, private$outcome_name],
             method = private$outcome_method,
             ...
@@ -217,7 +219,7 @@ DR <- R6::R6Class(
       } else {
         if (is.null(private$outcome_formula)) {
           model <- caret::train(
-            x = self$data[, c(private$confounders_treatment_name, private$treatment_name)],
+            x = self$data[, c(private$outcome_predictors, private$treatment_name)],
             y = self$data[, private$outcome_name],
             method = private$outcome_method,
             ...
@@ -249,8 +251,8 @@ DR <- R6::R6Class(
           train.t1.id <- (self$data[, private$treatment_name] == 1)
         }
 
-        x.train.1 <- self$data[train.t1.id, c(private$confounders_treatment_name)]
-        x.train.0 <- self$data[train.t1.id, c(private$confounders_treatment_name)]
+        x.train.1 <- self$data[train.t1.id, c(private$outcome_predictors)]
+        x.train.0 <- self$data[train.t1.id, c(private$outcome_predictors)]
         y.train.1 <- self$data[train.t1.id,private$outcome_name]
         y.train.0 <- self$data[train.t0.id,private$outcome_name]
 
@@ -273,7 +275,7 @@ DR <- R6::R6Class(
       } else {
         #browser()
 
-        x.train <- self$data[, c(private$confounders_treatment_name,private$treatment_name)]
+        x.train <- self$data[, c(private$outcome_predictors,private$treatment_name)]
         x.train[,private$treatment_name] <- as.numeric(as.character(x.train[,private$treatment_name]))
         y.train <- self$data[, private$outcome_name]
         if(length(private$confounders_treatment_factor)>0){
@@ -296,7 +298,7 @@ DR <- R6::R6Class(
 
     est_potentialOutcomes = function(two_models) {
       #browser()
-      data0 <- data1 <- self$data[, c(private$confounders_treatment_name, private$treatment_name)]
+      data0 <- data1 <- self$data[, c(private$outcome_predictors, private$treatment_name)]
       t.level <- unique(self$data[, private$treatment_name])
       level.order <- order(t.level)
       data0[, private$treatment_name] <- t.level[match(1, level.order)]
@@ -327,7 +329,7 @@ DR <- R6::R6Class(
     est_potentialOutcomes_BART= function(two_models) {
       #browser()
       if (two_models) {
-        data <- self$data[, private$confounders_treatment_name]
+        data <- self$data[, private$outcome_predictors]
         if(length(private$confounders_treatment_factor)>0){
           data <- fastDummies::dummy_cols(data, select_columns= private$confounders_treatment_factor,
                                           remove_selected_columns = TRUE)
@@ -338,7 +340,7 @@ DR <- R6::R6Class(
         y0.hat <- apply(predict(self$model$outcome$model.y0, newdata = data)$prob.test,2,mean)
       } else {
         #browser()
-        data0 <- data1 <- self$data[, c(private$confounders_treatment_name, private$treatment_name)]
+        data0 <- data1 <- self$data[, c(private$outcome_predictors, private$treatment_name)]
         data0[, private$treatment_name] <- 0
         data1[, private$treatment_name] <- 1
         if(length(private$confounders_treatment_factor)>0){
