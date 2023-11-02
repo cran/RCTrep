@@ -14,7 +14,7 @@ A data frame with 5000 rows and 8 variables:
 \item{x4}{binary variable, x4 ~ rbinom(5000,1,0.8)}
 \item{x5}{binary variable, x5 ~ rbinom(5000,1,0.7)}
 \item{x6}{binary variable, x6 ~ rbinom(5000,1,0.8)}
-\item{z}{binary variable indicating treatment and control. pp = x1*x2+x3*x4+5*x5+x6, p(z=1) = p = 1/1+e^{-(pp-mean(pp))/sd(pp)*sqrt(3)/pi}, z ~ rbinom(5000,1,p)}
+\item{z}{binary variable indicating treatment and control. pp = x1*x2+x3*x4+5*x5+x6, p(z=1) = p = 1/(1+e^-(pp-mean(pp))/sd(pp)*sqrt(3)/pi), z ~ rbinom(5000,1,p)}
 \item{y}{continuous variable indicating outcome, y ~ x1 + 6*x2+x6+2*z + rnorm(5000,0,1)}
 }
 }

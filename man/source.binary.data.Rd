@@ -13,8 +13,8 @@ A data frame with 2624 rows and 9 variables.
 \item{x4}{binary variable, x4 ~ rbinom(5000,1,0.8)}
 \item{x5}{binary variable, x5 ~ rbinom(5000,1,0.7)}
 \item{x6}{binary variable, x6 ~ rbinom(5000,1,0.8)}
-\item{z}{binary variable. pp = x1*x2+x3*x4+5*x5+x6, p(z=1) = p = 1/1+e^{-(pp-mean(pp))/sd(pp)*sqrt(3)/pi}, z ~ rbinom(5000,1,p)}
-\item{y}{binary variable. pp = x1 + (6*x2+x6+2)*z, p(y=1) = p = 1/1+e^{-(pp-mean(pp))/sd(pp)*sqrt(3)/pi}, y ~ rbinom(5000,1,p)}
+\item{z}{binary variable. pp = x1*x2+x3*x4+5*x5+x6, p(z=1) = p = 1/(1+e^-(pp-mean(pp))/sd(pp)*sqrt(3)/pi), z ~ rbinom(5000,1,p)}
+\item{y}{binary variable. pp = x1 + (6*x2+x6+2)*z, p(y=1) = p = 1/(1+e^-(pp-mean(pp))/sd(pp)*sqrt(3)/pi), y ~ rbinom(5000,1,p)}
 \item{pt}{a continuous variable within 0 and 1, specifying the probability of p(z=1) given x1,x2,x3,x4,x5,x6}
 }
 }

@@ -117,7 +117,7 @@ Fusion <- R6::R6Class(
               geom_point(position = position_dodge(0.7), aes(size=size)) +
               geom_errorbar(aes(xmin = ci_l, xmax = ci_u), width = .5, position = position_dodge(0.7)) +
               geom_vline(xintercept = 0, color = "black", linetype = "dashed", alpha = .5) +
-              xlab("treatment effet of populations")
+              xlab("average treatment effects of populations")
               #xlab("survival difference (95% CI)") +
               ggtitle("Comparison of estimates") +
               theme(axis.text.x = element_text(vjust = -2.5))+
